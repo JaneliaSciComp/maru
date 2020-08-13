@@ -2,12 +2,14 @@ package cmd
 
 import (
 	"fmt"
-	"log"
+	"github.com/AlecAivazis/survey/v2/terminal"
 	"os"
+	"regexp"
+	"strings"
 	"text/template"
 
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
-	"github.com/tcnksm/go-input"
 	Utils "jape/utils"
 )
 
@@ -16,19 +18,42 @@ var initCmd = &cobra.Command{
 	Short: "Initialize a new Jade project of the given flavor in the current directory",
 	Long: `This command initializes a new Jade project for containerizing the code 
 in the current directory. The flavor determines how the code is packaged. 
-Valid flavors include: empty, python, java, fiji, matlab, bash
+Valid flavors include: fiji_macro, python_conda, java_maven, matlab_compiled
 `,
-	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		flavor := args[0]
 
-		Utils.PrintInfo("Initializing Jape Project")
+		Utils.PrintInfo("Initialize Jape Project")
 
-		if flavor == "fiji" {
-			fiji()
+		const fijiMacro = "fiji_macro"
+		const pythonConda = "python_conda"
+		const javaMaven = "java_maven"
+		const matlabCompiled = "matlab_compiled"
+
+		flavor := pythonConda
+		if len(args)==0 {
+			prompt := &survey.Select{
+				Message: "What flavor of scientific software do you want to containerize?",
+				Options: []string{
+					pythonConda+" - Python project packaged with Conda",
+					javaMaven+" - Java project with Maven build",
+					fijiMacro+" - Fiji macro",
+					matlabCompiled+" - MATLAB script, compiled",
+				},
+				Default: flavor,
+			}
+			ask(prompt, &flavor)
 		} else {
-			msg := fmt.Errorf("invalid flavor specified: %s", flavor)
-			Utils.PrintFatal("%s", msg)
+			flavor = args[0]
+		}
+
+		if strings.HasPrefix(flavor, pythonConda) {
+			initProjectPython()
+		} else if strings.HasPrefix(flavor, javaMaven) {
+			initProjectJavaMaven()
+		} else if strings.HasPrefix(flavor, fijiMacro) {
+			initProjectFiji()
+		} else {
+			Utils.PrintFatal("Flavor is currently not supported: %s", flavor)
 			os.Exit(1)
 		}
 
@@ -49,59 +74,107 @@ func init() {
 	// initCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
-var ui = &input.UI{
-	Writer: os.Stdout,
-	Reader: os.Stdin,
-}
+func initProjectFiji() {
 
-type fijiParameters struct {
-	PluginDir string
-	MacroDir  string
-	MacroName string
-}
+	pluginDir := askForString("Relative path to Fiji plugins:", "fiji_plugins")
+	createDirectory(pluginDir)
 
-func fiji() {
+	macroDir := askForString("Relative path to Fiji macros:", "fiji_macros")
+	createDirectory(macroDir)
 
-	tpl := template.Must(template.ParseFiles("templates/fiji.got"))
-	data := fijiParameters{"fiji_plugins", "fiji_macros", "macro.ijm"}
+	macroName := askForString("Name of the Fiji macro file to run:", "macro.ijm")
 
-	data.PluginDir = read(data.PluginDir, "Relative path to the Fiji plugins which should be included in the container?")
-	data.MacroDir = read(data.MacroDir, "Relative path to the Fiji macros which should be included in the container?")
-	data.MacroName = read(data.MacroName, "Name of the Fiji macro file to execute when running the container?")
-
-	mkdir(data.PluginDir)
-	mkdir(data.MacroDir)
-
-	macroPath := data.MacroDir + "/" + data.MacroName
+	macroPath := macroDir + "/" + macroName
 	if Utils.FileExists(macroPath) {
 		Utils.PrintSuccess("Found macro file at %s", macroPath)
 	} else {
 		Utils.PrintFatal("Could not find macro file at %s", macroPath)
 	}
 
-	dockerFilePath := "Dockerfile"
-	if Utils.FileExists(dockerFilePath) {
+	data := struct {
+		PluginDir string
+		MacroDir  string
+		MacroName string
+	}{
+		pluginDir,
+		macroDir,
+		macroName,
+	}
+	generateDockerfile("templates/fiji.got", data)
+}
 
-		Utils.PrintError("Dockerfile already exists")
+func initProjectPython() {
 
-	} else {
-		if f, err := os.OpenFile(dockerFilePath, os.O_CREATE|os.O_EXCL|os.O_RDWR, 0644); err == nil {
-			defer f.Close()
+	pythonVersion := "3.6"
+	prompt := &survey.Select{
+		Message: "Python version:",
+		Options: []string{"2.7", "3.6", "3.7"},
+		Default: pythonVersion,
+	}
+	ask(prompt, &pythonVersion)
 
-			err2 := tpl.Execute(f, data)
-			if err2 != nil {
-				Utils.PrintFatal("Error creating Dockerfile: %s", err2)
-			}
+	dependenciesText := ""
+	mlPrompt := &survey.Multiline{
+		Message: "Dependencies to install with Conda (e.g. h5py=2.8.0)",
+	}
+	ask(mlPrompt, &dependenciesText)
 
-			Utils.PrintSuccess("Created Dockerfile")
+	re := regexp.MustCompile(`\n`)
+	dependencies := re.ReplaceAllString(dependenciesText, " ")
 
-		} else {
-			Utils.PrintFatal("Error creating Dockerfile: %s", err)
-		}
+	relativeScriptPath := askForString("Relative path to main script:", "main.py")
+
+	data := struct {
+		PythonVersion string
+		Dependencies  string
+		RelativeScriptPath string
+	}{
+		pythonVersion,
+		dependencies,
+		relativeScriptPath,
+	}
+	generateDockerfile("templates/python.got", data)
+}
+
+func initProjectJavaMaven() {
+
+	gitUrl := askForString("URL to git repo:", "")
+	buildCommand := askForString("Build command:", "mvn package")
+	mainClass := askForString("Main class:", "org.janelia.app.MyClass")
+
+	data := struct {
+		GitUrl string
+		BuildCommand  string
+		MainClass string
+	}{
+		gitUrl,
+		buildCommand,
+		mainClass,
+	}
+	generateDockerfile("templates/java_maven.got", data)
+}
+
+func ask(prompt survey.Prompt, response interface{}, opts ...survey.AskOpt) {
+	err := survey.AskOne(prompt, response)
+	if err == terminal.InterruptErr {
+		fmt.Println("interrupted")
+		os.Exit(0)
+	} else if err != nil {
+		panic(err)
 	}
 }
 
-func mkdir(dir string) {
+func askForString(message string, defaultValue string) string {
+	value := defaultValue
+	prompt := &survey.Input{
+		Message: message,
+		Default: value,
+	}
+	ask(prompt, &value)
+	return value
+}
+
+func createDirectory(dir string) {
 	if Utils.Mkdir(dir) {
 		Utils.PrintSuccess("Created directory %s", dir)
 	} else {
@@ -109,14 +182,31 @@ func mkdir(dir string) {
 	}
 }
 
-func read(value string, query string) string {
-	newValue, err := ui.Ask(query, &input.Options{
-		Default:  value,
-		Required: true,
-		Loop:     true,
-	})
-	if err != nil {
-		log.Fatalln(err)
+func generateDockerfile(templateName string, data interface{}) {
+	const dockerFilePath = "Dockerfile"
+
+	if Utils.FileExists(dockerFilePath) {
+		replace := false
+		prompt := &survey.Confirm{
+			Message: "Found existing Dockerfile. Replace?",
+			Default: replace,
+		}
+		ask(prompt, &replace)
+		if !replace {
+			Utils.PrintFatal("Project initialization aborted")
+		}
 	}
-	return newValue
+	tmpl := template.Must(template.ParseFiles(templateName))
+	if f, err := os.OpenFile(dockerFilePath, os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0644); err == nil {
+		defer f.Close()
+		err2 := tmpl.Execute(f, data)
+		if err2 != nil {
+			Utils.PrintFatal("Error creating Dockerfile: %s", err2)
+		}
+
+		Utils.PrintSuccess("Created Dockerfile")
+
+	} else {
+		Utils.PrintFatal("Error creating Dockerfile: %s", err)
+	}
 }

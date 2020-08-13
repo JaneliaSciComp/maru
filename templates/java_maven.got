@@ -1,0 +1,20 @@
+# Staged build using builder container
+FROM janeliascicomp/builder:1.2.0 as builder
+ARG APP_TAG=master
+
+# Checkout and build the code
+WORKDIR /tmp/app
+RUN git clone --branch $APP_TAG --depth 1 {{ .GitUrl }} . \
+    && {{ .BuildCommand }}
+
+# Find the built jar, based on the version in the pom file
+RUN xq -r '.project.artifactId+"-"+.project.version+".jar"' pom.xml > filename \
+    && mv /tmp/app/target/`cat filename` application.jar
+
+# Final image
+FROM janeliascicomp/fiji:fiji-openjdk-8
+COPY --from=builder /tmp/app/application.jar /app/application.jar
+RUN printf "#!/bin/bash\njava -cp /app/application.jar {{ .MainClass }}\n" \
+    >> /entrypoint.sh \
+    && chmod +x /entrypoint.sh
+ENTRYPOINT [ "/entrypoint.sh"]
