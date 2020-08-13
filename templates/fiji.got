@@ -1,0 +1,8 @@
+FROM janeliascicomp/fiji:fiji-openjdk-8
+{{ if .PluginDir }}
+COPY {{ .PluginDir }} /opt/fiji/Fiji.app/plugins
+{{ end -}}
+{{- if .MacroDir }}
+COPY {{ .MacroDir }} /opt/fiji/Fiji.app/macros
+{{ end }}
+ENTRYPOINT [ "/opt/fiji/entrypoint.sh", "-macro", "{{ .MacroName }}" ]
