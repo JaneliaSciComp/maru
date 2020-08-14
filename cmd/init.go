@@ -1,17 +1,22 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/AlecAivazis/survey/v2/terminal"
+	"github.com/posener/gitfs"
+	"github.com/posener/gitfs/fsutil"
+	"github.com/spf13/cobra"
+	Utils "jape/utils"
 	"os"
 	"regexp"
 	"strings"
-	"text/template"
-
-	"github.com/AlecAivazis/survey/v2"
-	"github.com/spf13/cobra"
-	Utils "jape/utils"
 )
+
+// Add debug mode environment variable. When running with `LOCAL_DEBUG=.`, the
+// local git repository will be used instead of the remote github.
+var localDebug = os.Getenv("LOCAL_DEBUG")
 
 var initCmd = &cobra.Command{
 	Use:   "init <flavor>",
@@ -100,7 +105,7 @@ func initProjectFiji() {
 		macroDir,
 		macroName,
 	}
-	generateDockerfile("templates/fiji.got", data)
+	generateDockerfile("fiji.got", data)
 }
 
 func initProjectPython() {
@@ -133,7 +138,7 @@ func initProjectPython() {
 		dependencies,
 		relativeScriptPath,
 	}
-	generateDockerfile("templates/python.got", data)
+	generateDockerfile("python.got", data)
 }
 
 func initProjectJavaMaven() {
@@ -151,7 +156,7 @@ func initProjectJavaMaven() {
 		buildCommand,
 		mainClass,
 	}
-	generateDockerfile("templates/java_maven.got", data)
+	generateDockerfile("java_maven.got", data)
 }
 
 func ask(prompt survey.Prompt, response interface{}, opts ...survey.AskOpt) {
@@ -196,10 +201,22 @@ func generateDockerfile(templateName string, data interface{}) {
 			Utils.PrintFatal("Project initialization aborted")
 		}
 	}
-	tmpl := template.Must(template.ParseFiles(templateName))
+
+	fs, err := gitfs.New(context.Background(),
+		"github.com/JaneliaSciComp/jape/templates", gitfs.OptLocal(localDebug))
+	if err != nil {
+		Utils.PrintFatal("Failed creating gitfs: %s", err)
+	}
+
+	tmpls, err := fsutil.TmplParse(fs, nil, "/"+templateName)
+	if err != nil {
+		Utils.PrintFatal("Failed parsing templates: %s", err)
+	}
+
 	if f, err := os.OpenFile(dockerFilePath, os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0644); err == nil {
 		defer f.Close()
-		err2 := tmpl.Execute(f, data)
+
+		err2 := tmpls.ExecuteTemplate(f, templateName, data)
 		if err2 != nil {
 			Utils.PrintFatal("Error creating Dockerfile: %s", err2)
 		}
