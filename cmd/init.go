@@ -30,22 +30,29 @@ Valid flavors include: fiji_macro, python_conda, java_maven, matlab_compiled
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		Utils.PrintInfo("Initialize Jape Project")
+		Utils.PrintInfo("Configure Jape Project")
 
 		const fijiMacro = "fiji_macro"
 		const pythonConda = "python_conda"
 		const javaMaven = "java_maven"
 		const matlabCompiled = "matlab_compiled"
+		var isNewProject = false
 
-		flavor := pythonConda
+		var config = Utils.ReadProjectConfig()
+		if config == nil {
+			isNewProject = true
+			config = Utils.NewJapeConfig(fijiMacro, "")
+		}
+
+		flavor := config.Flavor
 		if len(args)==0 {
 			prompt := &survey.Select{
 				Message: "What flavor of scientific software do you want to containerize?",
 				Options: []string{
-					pythonConda+" - Python project packaged with Conda",
-					javaMaven+" - Java project with Maven build",
-					fijiMacro+" - Fiji macro",
-					matlabCompiled+" - MATLAB script, compiled",
+					pythonConda,
+					javaMaven,
+					fijiMacro,
+					matlabCompiled,
 				},
 				Default: flavor,
 			}
@@ -54,10 +61,11 @@ Valid flavors include: fiji_macro, python_conda, java_maven, matlab_compiled
 			flavor = args[0]
 		}
 
-		gitUrl := askForString("Git URL:", "https://github.com/example/repo.git")
-		gitTag := askForString("Git tag:", "master")
+		config.Flavor = flavor
+		config.Config.Repository.Url = askForString("Git URL:", config.Config.Repository.Url)
+		config.Config.Repository.Tag = askForString("Git tag:", config.Config.Repository.Tag)
 
-		u, err := url.Parse(gitUrl)
+		u, err := url.Parse(config.Config.Repository.Url)
 		if err != nil {
 			Utils.PrintFatal("Problem parsing Git URL: %s",err)
 		}
@@ -70,22 +78,28 @@ Valid flavors include: fiji_macro, python_conda, java_maven, matlab_compiled
 			Utils.PrintFatal("URL must contain valid hostname")
 		}
 
-		basename := path.Base(u.Path)
-		defaultName := strings.ToLower(strings.TrimSuffix(basename, filepath.Ext(basename)))
-		projectName := askForString("Container name:", defaultName)
+		if config.Name=="" {
+			basename := path.Base(u.Path)
+			config.Name = strings.ToLower(strings.TrimSuffix(basename, filepath.Ext(basename)))
+		}
+
+		config.Name = askForString("Container name:", config.Name)
 
 		if strings.HasPrefix(flavor, pythonConda) {
-			initProjectPython(gitUrl)
+			initProjectPython(config, isNewProject)
+
 		} else if strings.HasPrefix(flavor, javaMaven) {
-			initProjectJavaMaven(gitUrl)
+			initProjectJavaMaven(config, isNewProject)
+
 		} else if strings.HasPrefix(flavor, fijiMacro) {
-			initProjectFiji(gitUrl)
+			initProjectFiji(config, isNewProject)
+
 		} else {
 			Utils.PrintFatal("Flavor is currently not supported: %s", flavor)
 			os.Exit(1)
 		}
 
-		Utils.WriteProjectConfig(Utils.NewJapeConfig(flavor, projectName, gitUrl, gitTag))
+		Utils.WriteProjectConfig(config)
 
 		Utils.PrintInfo("Jape project was successfully initialized.")
 		Utils.PrintInfo("You can edit the jape.yaml file any time to update the project configuration.")
@@ -97,91 +111,77 @@ func init() {
 	rootCmd.AddCommand(initCmd)
 }
 
-func initProjectFiji(gitUrl string) {
+func initProjectFiji(config *Utils.JapeConfig, isNewProject bool) {
 
-	pluginDir := askForString("Relative path to Fiji plugins:", "fiji_plugins")
-	createDirectory(pluginDir)
+	pc := &config.Config.FijiMacro
 
-	macroDir := askForString("Relative path to Fiji macros:", "fiji_macros")
-	createDirectory(macroDir)
+	if isNewProject {
+		pc.MacroDir = "fiji_plugins"
+		pc.MacroDir = "fiji_macros"
+		pc.MacroName = "macro"
+	}
 
-	macroName := askForString("Name of the Fiji macro file to run:", "macro.ijm")
+	pc.PluginDir = askForString("Relative path to Fiji plugins:", pc.PluginDir)
+	createDirectory(config.Config.FijiMacro.PluginDir)
 
-	macroPath := macroDir + "/" + macroName
+	pc.MacroDir = askForString("Relative path to Fiji macros:", pc.MacroDir)
+	createDirectory(config.Config.FijiMacro.MacroDir)
+
+	pc.MacroName = askForString("Name of the Fiji macro file to run:", pc.MacroName)
+
+	macroPath := pc.MacroDir + "/" + pc.MacroName
 	if Utils.FileExists(macroPath) {
 		Utils.PrintSuccess("Found macro file at %s", macroPath)
 	} else {
 		Utils.PrintFatal("Could not find macro file at %s", macroPath)
 	}
 
-	data := struct {
-		GitUrl string
-		BuildCommand  string
-		PluginDir string
-		MacroDir  string
-		MacroName string
-	}{
-		gitUrl,
-		"",
-		pluginDir,
-		macroDir,
-		macroName,
-	}
-	generateDockerfile("fiji.got", data)
+	generateDockerfile("fiji.got", config)
 }
 
-func initProjectPython(gitUrl string) {
+func initProjectPython(config *Utils.JapeConfig, isNewProject bool) {
 
-	pythonVersion := "3.6"
+	pc := &config.Config.PythonConda
+
+	if isNewProject {
+		pc.PythonVersion = "3.6"
+		pc.Dependencies = ""
+		pc.RelativeScriptPath = "main.py"
+	}
+
 	prompt := &survey.Select{
 		Message: "Python version:",
 		Options: []string{"2.7", "3.6", "3.7"},
-		Default: pythonVersion,
+		Default: pc.PythonVersion,
 	}
-	ask(prompt, &pythonVersion)
+	ask(prompt, &pc.PythonVersion)
 
-	dependenciesText := ""
+	dependenciesText := pc.Dependencies
 	mlPrompt := &survey.Multiline{
 		Message: "Dependencies to install with Conda (e.g. h5py=2.8.0)",
+		Default: dependenciesText,
 	}
 	ask(mlPrompt, &dependenciesText)
+	pc.Dependencies = regexp.MustCompile(`\s+`).ReplaceAllString(dependenciesText, " ")
 
-	re := regexp.MustCompile(`\n`)
-	dependencies := re.ReplaceAllString(dependenciesText, " ")
+	pc.RelativeScriptPath = askForString("Relative path to main script:", pc.RelativeScriptPath)
 
-	relativeScriptPath := askForString("Relative path to main script:", "main.py")
-
-	data := struct {
-		GitUrl string
-		BuildCommand  string
-		PythonVersion string
-		Dependencies  string
-		RelativeScriptPath string
-	}{
-		gitUrl,
-		"",
-		pythonVersion,
-		dependencies,
-		relativeScriptPath,
-	}
-	generateDockerfile("python.got", data)
+	generateDockerfile("python.got", config)
 }
 
-func initProjectJavaMaven(gitUrl string) {
+func initProjectJavaMaven(config *Utils.JapeConfig, isNewProject bool) {
 
-	buildCommand := askForString("Build command:", "mvn package")
-	mainClass := askForString("Main class:", "org.janelia.app.MyClass")
+	pc := &config.Config.JavaMaven
 
-	data := struct {
-		GitUrl string
-		BuildCommand  string
-		MainClass string
-	}{
-		gitUrl,
-		buildCommand,
-		mainClass,
+	if isNewProject {
+		config.Config.Build.Command = "mvn package"
+		pc.MainClass = "org.myapp.MyClass"
 	}
-	generateDockerfile("java_maven.got", data)
+
+	config.Config.Build.Command = askForString("Build command:", config.Config.Build.Command)
+	pc.MainClass = askForString("Main class:", pc.MainClass)
+
+	generateDockerfile("java_maven.got", config)
 }
 
 func ask(prompt survey.Prompt, response interface{}, opts ...survey.AskOpt) {
@@ -216,7 +216,7 @@ func generateDockerfile(templateName string, data interface{}) {
 	const dockerFilePath = "Dockerfile"
 
 	if Utils.FileExists(dockerFilePath) {
-		replace := false
+		replace := true
 		prompt := &survey.Confirm{
 			Message: "Found existing Dockerfile. Replace?",
 			Default: replace,

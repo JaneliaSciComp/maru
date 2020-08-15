@@ -4,15 +4,15 @@ ARG APP_TAG=master
 
 # Checkout and build the code
 WORKDIR /tmp/app
-RUN git clone --branch $APP_TAG --depth 1 {{ .GitUrl }} . \
-    && {{ .BuildCommand }}
+RUN git clone --branch $APP_TAG --depth 1 {{ .Config.Repository.Url }} . \
+    && {{ .Config.Build.Command }}
 
 # Create final image
 FROM janeliascicomp/fiji:fiji-openjdk-8
-{{ if .PluginDir }}
-COPY --from=builder /tmp/app/{{ .PluginDir }} /opt/fiji/Fiji.app/plugins
+{{ if .Config.FijiMacro.PluginDir }}
+COPY --from=builder /tmp/app/{{ .Config.FijiMacro.PluginDir }} /opt/fiji/Fiji.app/plugins
 {{- end -}}
-{{- if .MacroDir }}
-COPY --from=builder /tmp/app/{{ .MacroDir }} /opt/fiji/Fiji.app/macros
+{{- if .Config.FijiMacro.MacroDir }}
+COPY --from=builder /tmp/app/{{ .Config.FijiMacro.MacroDir }} /opt/fiji/Fiji.app/macros
 {{ end }}
-ENTRYPOINT [ "/opt/fiji/entrypoint.sh", "-macro", "{{ .MacroName }}" ]
+ENTRYPOINT [ "/opt/fiji/entrypoint.sh", "-macro", "{{ .Config.FijiMacro.MacroName }}" ]

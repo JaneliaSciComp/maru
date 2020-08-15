@@ -4,8 +4,8 @@ ARG APP_TAG=master
 
 # Checkout and build the code
 WORKDIR /tmp/app
-RUN git clone --branch $APP_TAG --depth 1 {{ .GitUrl }} . \
-    && {{ .BuildCommand }}
+RUN git clone --branch $APP_TAG --depth 1 {{ .Config.Repository.Url }} . \
+    && {{ .Config.Build.Command }}
 
 # Find the built jar, based on the version in the pom file
 RUN xq -r '.project.artifactId+"-"+.project.version+".jar"' pom.xml > filename \
@@ -14,6 +14,6 @@ RUN xq -r '.project.artifactId+"-"+.project.version+".jar"' pom.xml > filename \
 # Create final image
 FROM openjdk:8
 COPY --from=builder /tmp/app/app.jar /app/app.jar
-RUN printf "#!/bin/bash\njava -cp /app/app.jar {{ .MainClass }} $@\n" >> /entrypoint.sh \
+RUN printf "#!/bin/bash\njava -cp /app/app.jar {{ .Config.JavaMaven.MainClass }} $@\n" >> /entrypoint.sh \
     && chmod +x /entrypoint.sh
 ENTRYPOINT [ "/entrypoint.sh"]

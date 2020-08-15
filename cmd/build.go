@@ -39,7 +39,8 @@ func runBuild() {
 	config := Utils.ReadProjectConfig()
 	versionTag := config.Name + ":" + config.Version
 
-	Utils.PrintInfo("Building %s from %s @ %s", versionTag, config.GitTag, config.GitUrl)
+	Utils.PrintInfo("Building %s from %s @ %s", versionTag,
+		config.Config.Repository.Tag, config.Config.Repository.Url)
 
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
@@ -65,7 +66,7 @@ func runBuild() {
 	Utils.PrintMessage("Building image...")
 
 	buildArgs := make(map[string]*string)
-	buildArgs["APP_TAG"] = &config.GitTag
+	buildArgs["APP_TAG"] = &config.Config.Repository.Tag
 
 	options := types.ImageBuildOptions{
 		SuppressOutput: false,
