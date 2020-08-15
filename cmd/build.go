@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/jhoonb/archivex"
 	"github.com/moby/term"
@@ -19,16 +18,11 @@ import (
 // buildCmd represents the build command
 var buildCmd = &cobra.Command{
 	Use:   "build",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Build a container for the current project",
+	Long: `Runs a docker build for the current Jape project. The current directory must contain a jape.yaml 
+file describing the project. You can initialize a project using the init command.
+`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("build called")
-
 		runBuild()
 	},
 }
@@ -51,11 +45,18 @@ func runBuild() {
 	// To get the Docker client working, I had to `go get github.com/docker/docker@master`
 	// as per https://github.com/moby/moby/issues/40185
 
+	config := Utils.ReadProjectConfig()
+	versionTag := config.Name+":"+config.Version
+
+	Utils.PrintInfo("Building %s", versionTag)
+
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		Utils.PrintFatal("%s", err)
 	}
 	defer cli.Close()
+
+	Utils.PrintMessage("Creating build context...")
 
 	file, err := ioutil.TempFile("", "jape_build_ctx_*.tar")
 	if err != nil {
@@ -70,9 +71,11 @@ func runBuild() {
 	dockerBuildContext, err := os.Open(file.Name())
 	defer dockerBuildContext.Close()
 
+	Utils.PrintMessage("Building image...")
+
 	options := types.ImageBuildOptions{
 		SuppressOutput: false,
-		Tags:           []string{"testimage:latest"},
+		Tags:           []string{config.Name+":latest",versionTag},
 		Dockerfile:     "./Dockerfile",
 		//BuildArgs:      args,
 	}
@@ -87,4 +90,7 @@ func runBuild() {
 	if err2 != nil {
 		Utils.PrintFatal("%s", err2)
 	}
+
+	Utils.PrintSuccess("Successfully built %s", versionTag)
+	Utils.PrintInfo("Next use `jape run` to run the container")
 }

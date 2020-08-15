@@ -1,8 +1,18 @@
+# Staged build using builder container
+FROM janeliascicomp/builder:1.2.0 as builder
+ARG APP_TAG=master
+
+# Checkout and build the code
+WORKDIR /tmp/app
+RUN git clone --branch $APP_TAG --depth 1 {{ .GitUrl }} . \
+    && {{ .BuildCommand }}
+
+# Create final image
 FROM janeliascicomp/fiji:fiji-openjdk-8
 {{ if .PluginDir }}
-COPY {{ .PluginDir }} /opt/fiji/Fiji.app/plugins
+COPY --from=builder /tmp/app/{{ .PluginDir }} /opt/fiji/Fiji.app/plugins
 {{- end -}}
 {{- if .MacroDir }}
-COPY {{ .MacroDir }} /opt/fiji/Fiji.app/macros
+COPY --from=builder /tmp/app/{{ .MacroDir }} /opt/fiji/Fiji.app/macros
 {{ end }}
 ENTRYPOINT [ "/opt/fiji/entrypoint.sh", "-macro", "{{ .MacroName }}" ]

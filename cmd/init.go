@@ -9,7 +9,10 @@ import (
 	"github.com/posener/gitfs/fsutil"
 	"github.com/spf13/cobra"
 	Utils "jape/utils"
+	"net/url"
 	"os"
+	"path"
+	"path/filepath"
 	"regexp"
 	"strings"
 )
@@ -51,19 +54,41 @@ Valid flavors include: fiji_macro, python_conda, java_maven, matlab_compiled
 			flavor = args[0]
 		}
 
+		gitUrl := askForString("Git URL:", "https://github.com/example/repo.git")
+
+		u, err := url.Parse(gitUrl)
+		if err != nil {
+			Utils.PrintFatal("Problem parsing Git URL: %s",err)
+		}
+
+		if u.Scheme != "https" {
+			Utils.PrintFatal("URL must begin with https")
+		}
+
+		if u.Host == "" {
+			Utils.PrintFatal("URL must contain valid hostname")
+		}
+
+		basename := path.Base(u.Path)
+		defaultName := strings.ToLower(strings.TrimSuffix(basename, filepath.Ext(basename)))
+		projectName := askForString("Container name:", defaultName)
+
 		if strings.HasPrefix(flavor, pythonConda) {
-			initProjectPython()
+			initProjectPython(gitUrl)
 		} else if strings.HasPrefix(flavor, javaMaven) {
-			initProjectJavaMaven()
+			initProjectJavaMaven(gitUrl)
 		} else if strings.HasPrefix(flavor, fijiMacro) {
-			initProjectFiji()
+			initProjectFiji(gitUrl)
 		} else {
 			Utils.PrintFatal("Flavor is currently not supported: %s", flavor)
 			os.Exit(1)
 		}
 
+		Utils.WriteProjectConfig(Utils.NewJapeConfig(flavor, projectName, gitUrl))
+
 		Utils.PrintInfo("Jape project was successfully initialized.")
-		Utils.PrintInfo("Next run `jape build` to build the container.")
+		Utils.PrintInfo("You can edit the jape.yaml file any time to update the project configuration.")
+		Utils.PrintInfo("Next run `jape build` to build and tag the container.")
 	},
 }
 
@@ -79,7 +104,7 @@ func init() {
 	// initCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
-func initProjectFiji() {
+func initProjectFiji(gitUrl string) {
 
 	pluginDir := askForString("Relative path to Fiji plugins:", "fiji_plugins")
 	createDirectory(pluginDir)
@@ -97,10 +122,14 @@ func initProjectFiji() {
 	}
 
 	data := struct {
+		GitUrl string
+		BuildCommand  string
 		PluginDir string
 		MacroDir  string
 		MacroName string
 	}{
+		gitUrl,
+		"",
 		pluginDir,
 		macroDir,
 		macroName,
@@ -108,7 +137,7 @@ func initProjectFiji() {
 	generateDockerfile("fiji.got", data)
 }
 
-func initProjectPython() {
+func initProjectPython(gitUrl string) {
 
 	pythonVersion := "3.6"
 	prompt := &survey.Select{
@@ -130,10 +159,14 @@ func initProjectPython() {
 	relativeScriptPath := askForString("Relative path to main script:", "main.py")
 
 	data := struct {
+		GitUrl string
+		BuildCommand  string
 		PythonVersion string
 		Dependencies  string
 		RelativeScriptPath string
 	}{
+		gitUrl,
+		"",
 		pythonVersion,
 		dependencies,
 		relativeScriptPath,
@@ -141,9 +174,8 @@ func initProjectPython() {
 	generateDockerfile("python.got", data)
 }
 
-func initProjectJavaMaven() {
+func initProjectJavaMaven(gitUrl string) {
 
-	gitUrl := askForString("URL to git repo:", "")
 	buildCommand := askForString("Build command:", "mvn package")
 	mainClass := askForString("Main class:", "org.janelia.app.MyClass")
 
@@ -165,7 +197,7 @@ func ask(prompt survey.Prompt, response interface{}, opts ...survey.AskOpt) {
 		fmt.Println("interrupted")
 		os.Exit(0)
 	} else if err != nil {
-		panic(err)
+		Utils.PrintFatal("%s", err)
 	}
 }
 
@@ -218,12 +250,12 @@ func generateDockerfile(templateName string, data interface{}) {
 
 		err2 := tmpls.ExecuteTemplate(f, templateName, data)
 		if err2 != nil {
-			Utils.PrintFatal("Error creating Dockerfile: %s", err2)
+			Utils.PrintFatal("Failed to create Dockerfile: %s", err2)
 		}
 
 		Utils.PrintSuccess("Created Dockerfile")
 
 	} else {
-		Utils.PrintFatal("Error creating Dockerfile: %s", err)
+		Utils.PrintFatal("Failed to create Dockerfile: %s", err)
 	}
 }

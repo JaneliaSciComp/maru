@@ -9,12 +9,11 @@ RUN git clone --branch $APP_TAG --depth 1 {{ .GitUrl }} . \
 
 # Find the built jar, based on the version in the pom file
 RUN xq -r '.project.artifactId+"-"+.project.version+".jar"' pom.xml > filename \
-    && mv /tmp/app/target/`cat filename` application.jar
+    && mv /tmp/app/target/`cat filename` app.jar
 
-# Final image
-FROM janeliascicomp/fiji:fiji-openjdk-8
-COPY --from=builder /tmp/app/application.jar /app/application.jar
-RUN printf "#!/bin/bash\njava -cp /app/application.jar {{ .MainClass }}\n" \
-    >> /entrypoint.sh \
+# Create final image
+FROM openjdk:8
+COPY --from=builder /tmp/app/app.jar /app/app.jar
+RUN printf "#!/bin/bash\njava -cp /app/app.jar {{ .MainClass }}\n" >> /entrypoint.sh \
     && chmod +x /entrypoint.sh
 ENTRYPOINT [ "/entrypoint.sh"]
