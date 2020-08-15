@@ -2,14 +2,15 @@ package cmd
 
 import (
 	"context"
-	"github.com/docker/docker/pkg/jsonmessage"
-	"github.com/jhoonb/archivex"
-	"github.com/moby/term"
-	"github.com/spf13/cobra"
 	"io/ioutil"
 	Utils "jape/utils"
 	"log"
 	"os"
+
+	"github.com/docker/docker/pkg/jsonmessage"
+	"github.com/jhoonb/archivex"
+	"github.com/moby/term"
+	"github.com/spf13/cobra"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
@@ -29,16 +30,6 @@ file describing the project. You can initialize a project using the init command
 
 func init() {
 	rootCmd.AddCommand(buildCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// buildCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// buildCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
 func runBuild() {
@@ -46,9 +37,9 @@ func runBuild() {
 	// as per https://github.com/moby/moby/issues/40185
 
 	config := Utils.ReadProjectConfig()
-	versionTag := config.Name+":"+config.Version
+	versionTag := config.Name + ":" + config.Version
 
-	Utils.PrintInfo("Building %s", versionTag)
+	Utils.PrintInfo("Building %s from %s @ %s", versionTag, config.GitTag, config.GitUrl)
 
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
@@ -73,11 +64,14 @@ func runBuild() {
 
 	Utils.PrintMessage("Building image...")
 
+	buildArgs := make(map[string]*string)
+	buildArgs["APP_TAG"] = &config.GitTag
+
 	options := types.ImageBuildOptions{
 		SuppressOutput: false,
-		Tags:           []string{config.Name+":latest",versionTag},
+		Tags:           []string{config.Name + ":latest", versionTag},
 		Dockerfile:     "./Dockerfile",
-		//BuildArgs:      args,
+		BuildArgs:      buildArgs,
 	}
 	r, err := cli.ImageBuild(context.Background(), dockerBuildContext, options)
 	if err != nil {

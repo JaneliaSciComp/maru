@@ -55,6 +55,7 @@ Valid flavors include: fiji_macro, python_conda, java_maven, matlab_compiled
 		}
 
 		gitUrl := askForString("Git URL:", "https://github.com/example/repo.git")
+		gitTag := askForString("Git tag:", "master")
 
 		u, err := url.Parse(gitUrl)
 		if err != nil {
@@ -84,7 +85,7 @@ Valid flavors include: fiji_macro, python_conda, java_maven, matlab_compiled
 			os.Exit(1)
 		}
 
-		Utils.WriteProjectConfig(Utils.NewJapeConfig(flavor, projectName, gitUrl))
+		Utils.WriteProjectConfig(Utils.NewJapeConfig(flavor, projectName, gitUrl, gitTag))
 
 		Utils.PrintInfo("Jape project was successfully initialized.")
 		Utils.PrintInfo("You can edit the jape.yaml file any time to update the project configuration.")
@@ -94,14 +95,6 @@ Valid flavors include: fiji_macro, python_conda, java_maven, matlab_compiled
 
 func init() {
 	rootCmd.AddCommand(initCmd)
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// initCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// initCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
 func initProjectFiji(gitUrl string) {

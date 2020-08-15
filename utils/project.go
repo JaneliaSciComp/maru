@@ -15,8 +15,8 @@ type JapeConfig struct {
 	GitTag string
 }
 
-func NewJapeConfig(flavor string, name string, gitUrl string) *JapeConfig {
-	return &JapeConfig{flavor, name, "1.0.0", gitUrl, "master"}
+func NewJapeConfig(flavor string, name string, gitUrl string, gitTag string) *JapeConfig {
+	return &JapeConfig{flavor, name, "1.0.0", gitUrl, gitTag}
 }
 
 // Writes the given project configuration to the working directory

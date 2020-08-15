@@ -14,6 +14,6 @@ RUN xq -r '.project.artifactId+"-"+.project.version+".jar"' pom.xml > filename \
 # Create final image
 FROM openjdk:8
 COPY --from=builder /tmp/app/app.jar /app/app.jar
-RUN printf "#!/bin/bash\njava -cp /app/app.jar {{ .MainClass }}\n" >> /entrypoint.sh \
+RUN printf "#!/bin/bash\njava -cp /app/app.jar {{ .MainClass }} $@\n" >> /entrypoint.sh \
     && chmod +x /entrypoint.sh
 ENTRYPOINT [ "/entrypoint.sh"]
