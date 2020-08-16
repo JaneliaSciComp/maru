@@ -7,14 +7,14 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/spf13/cobra"
 	"io"
-	Utils "jape/utils"
+	Utils "maru/utils"
 	"os"
 )
 
 var runCmd = &cobra.Command{
 	Use:   "run",
 	Short: "Run the container for the current project",
-	Long: `Runs a docker container for the current Jape project. The current directory must contain a jape.yaml 
+	Long: `Runs a docker container for the current Maru project. The current directory must contain a maru.yaml 
 file describing the project. You can create a runnable project using the init and build commands.
 `,
 	Run: func(cmd *cobra.Command, args []string) {

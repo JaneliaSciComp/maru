@@ -5,9 +5,9 @@ import (
 	"io/ioutil"
 )
 
-const ConfFile = "jape.yaml"
+const ConfFile = "maru.yaml"
 
-type JapeConfig struct {
+type MaruConfig struct {
 	Name    string
 	Version string
 	Flavor  string
@@ -45,8 +45,8 @@ type JapeConfig struct {
 	} `yaml:"config,omitempty"`
 }
 
-func NewJapeConfig(flavor string, name string, version string) *JapeConfig {
-	c := &JapeConfig{}
+func NewMaruConfig(flavor string, name string, version string) *MaruConfig {
+	c := &MaruConfig{}
 	c.Name = name
 	c.Flavor = flavor
 	c.Version = version
@@ -54,7 +54,7 @@ func NewJapeConfig(flavor string, name string, version string) *JapeConfig {
 }
 
 // Writes the given project configuration to the working directory
-func WriteProjectConfig(c *JapeConfig) {
+func WriteProjectConfig(c *MaruConfig) {
 
 	raw, err := yaml.Marshal(&c)
 	if err != nil {
@@ -68,13 +68,13 @@ func WriteProjectConfig(c *JapeConfig) {
 }
 
 // Reads the current project configuration from the working directory. Returns nil if no file exists.
-func ReadProjectConfig() *JapeConfig {
+func ReadProjectConfig() *MaruConfig {
 
 	if !FileExists(ConfFile) {
 		return nil
 	}
 
-	var c = &JapeConfig{}
+	var c = &MaruConfig{}
 
 	yamlFile, err := ioutil.ReadFile(ConfFile)
 	if err != nil {

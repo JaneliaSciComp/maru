@@ -2,14 +2,14 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
-	Utils "jape/utils"
+	Utils "maru/utils"
 )
 
 var setCmd = &cobra.Command{
 	Use:   "set [variable] [value]",
-	Short: "Set the values of variables in the Jape configuration",
+	Short: "Set the values of variables in the Maru configuration",
 	Long: `Convenience command for quickly updating the project version and other variables 
-without manually editing the jape.yaml. Can be useful for automation, too. 
+without manually editing the maru.yaml. Can be useful for automation, too. 
 Supported variables:
 - version
 - repo_tag

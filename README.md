@@ -1,18 +1,18 @@
-# Jape
+# Maru
 
 ## Usage
 
 ```
-jape init
-jape build
-jape run
+maru init
+maru build
+maru run
 ```
 
 ## Building
 
-To compile and install Jape into your standard Go bin directory:
+To compile and install Maru into your standard Go bin directory:
 ```
-go install jape
+go install maru
 ```
 
 Any time the templates change, the serialization needs to be updated as follows:

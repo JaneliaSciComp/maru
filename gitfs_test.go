@@ -18,7 +18,7 @@ func TestGitfs(t *testing.T) {
 		glob    []string
 	}{
 		{
-			project: "github.com/JaneliaSciComp/jape/templates",
+			project: "github.com/JaneliaSciComp/maru/templates",
 		},
 	}
 	for _, tt := range projects {

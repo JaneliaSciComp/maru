@@ -3,7 +3,7 @@ package cmd
 import (
 	"context"
 	"io/ioutil"
-	Utils "jape/utils"
+	Utils "maru/utils"
 	"log"
 	"os"
 
@@ -19,7 +19,7 @@ import (
 var buildCmd = &cobra.Command{
 	Use:   "build",
 	Short: "Build a container for the current project",
-	Long: `Runs a docker build for the current Jape project. The current directory must contain a jape.yaml 
+	Long: `Runs a docker build for the current Maru project. The current directory must contain a maru.yaml 
 file describing the project. You can initialize a project using the init command.
 `,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -49,7 +49,7 @@ func runBuild() {
 
 	Utils.PrintMessage("Creating build context...")
 
-	file, err := ioutil.TempFile("", "jape_build_ctx_*.tar")
+	file, err := ioutil.TempFile("", "maru_build_ctx_*.tar")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -86,5 +86,5 @@ func runBuild() {
 	}
 
 	Utils.PrintSuccess("Successfully built %s", versionTag)
-	Utils.PrintInfo("Next use `jape run` to run the container")
+	Utils.PrintInfo("Next use `maru run` to run the container")
 }

@@ -1,6 +1,6 @@
 package main
 
-import "jape/cmd"
+import "maru/cmd"
 
 //go:generate gitfs ./...
 

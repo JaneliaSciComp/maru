@@ -8,7 +8,7 @@ import (
 	"github.com/posener/gitfs"
 	"github.com/posener/gitfs/fsutil"
 	"github.com/spf13/cobra"
-	Utils "jape/utils"
+	Utils "maru/utils"
 	"net/url"
 	"os"
 	"path"
@@ -22,19 +22,19 @@ import (
 var localDebug = os.Getenv("LOCAL_DEBUG")
 
 const dockerFilePath = "Dockerfile"
-type initFunctionType func (*Utils.JapeConfig, bool)
+type initFunctionType func (*Utils.MaruConfig, bool)
 
 var initCmd = &cobra.Command{
 	Use:   "init",
-	Short: "Initialize (or update) a Jade project in the current directory",
-	Long: `This command initializes or updates a Jade project in the current directory. If a Dockerfile already exists
-in the current directory, it can either be used to bootstrap a custom project or overwritten. If a jape.yaml file
+	Short: "Initialize (or update) a Maru project in the current directory",
+	Long: `This command initializes or updates a Maru project in the current directory. If a Dockerfile already exists
+in the current directory, it can either be used to bootstrap a custom project or overwritten. If a maru.yaml file
 exists in the current directory, the initialization questionnaire will run again using the default values from the 
-jape.yaml file. 
+maru.yaml file. 
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		Utils.PrintInfo("Configure Jape Project")
+		Utils.PrintInfo("Configure Maru Project")
 
 		flavorMap := map[string]initFunctionType {
 			"executable": initProjectExecutable,
@@ -52,14 +52,14 @@ jape.yaml file.
 			if Utils.FileExists(dockerFilePath) {
 				use := true
 				prompt := &survey.Confirm{
-					Message: "Create new Jape project using existing Dockerfile?",
+					Message: "Create new Maru project using existing Dockerfile?",
 					Default: use,
 				}
 				ask(prompt, &use)
 				if use {
 					containerName := askForString("Container name:", "")
 					containerVersion := askForString("Container version:", "1.0.0")
-					config = Utils.NewJapeConfig("custom", containerName, containerVersion)
+					config = Utils.NewMaruConfig("custom", containerName, containerVersion)
 					Utils.WriteProjectConfig(config)
 					printFinalInstructions(config)
 					os.Exit(0)
@@ -67,7 +67,7 @@ jape.yaml file.
 			}
 
 			isNewProject = true
-			config = Utils.NewJapeConfig("", "", "1.0.0")
+			config = Utils.NewMaruConfig("", "", "1.0.0")
 			config.Config.Build.RepoUrl = "https://github.com/example/repo.git"
 			config.Config.Build.RepoTag = "master"
 			config.Config.Build.Command = "true" // no-op by default
@@ -136,7 +136,7 @@ func init() {
 	rootCmd.AddCommand(initCmd)
 }
 
-func initProjectExecutable(config *Utils.JapeConfig, isNewProject bool) {
+func initProjectExecutable(config *Utils.MaruConfig, isNewProject bool) {
 
 	pc := &config.Config.Executable
 
@@ -150,7 +150,7 @@ func initProjectExecutable(config *Utils.JapeConfig, isNewProject bool) {
 	pc.RelativeExePath = askForString("Relative path to built executable:", pc.RelativeExePath)
 }
 
-func initProjectFiji(config *Utils.JapeConfig, isNewProject bool) {
+func initProjectFiji(config *Utils.MaruConfig, isNewProject bool) {
 
 	pc := &config.Config.FijiMacro
 
@@ -166,7 +166,7 @@ func initProjectFiji(config *Utils.JapeConfig, isNewProject bool) {
 	pc.MacroName = askForString("Name of the Fiji macro file to run:", pc.MacroName)
 }
 
-func initProjectPython(config *Utils.JapeConfig, isNewProject bool) {
+func initProjectPython(config *Utils.MaruConfig, isNewProject bool) {
 
 	pc := &config.Config.PythonConda
 
@@ -195,7 +195,7 @@ func initProjectPython(config *Utils.JapeConfig, isNewProject bool) {
 	pc.RelativeScriptPath = askForString("Relative path to main script:", pc.RelativeScriptPath)
 }
 
-func initProjectJavaMaven(config *Utils.JapeConfig, isNewProject bool) {
+func initProjectJavaMaven(config *Utils.MaruConfig, isNewProject bool) {
 
 	pc := &config.Config.JavaMaven
 
@@ -209,7 +209,7 @@ func initProjectJavaMaven(config *Utils.JapeConfig, isNewProject bool) {
 	pc.MainClass = askForString("Main class:", pc.MainClass)
 }
 
-func initProjectMatlab(config *Utils.JapeConfig, isNewProject bool) {
+func initProjectMatlab(config *Utils.MaruConfig, isNewProject bool) {
 	Utils.PrintFatal("MATLAB is currently unsupported")
 }
 
@@ -233,7 +233,7 @@ func askForString(message string, defaultValue string) string {
 	return value
 }
 
-func generateDockerfile(config *Utils.JapeConfig) {
+func generateDockerfile(config *Utils.MaruConfig) {
 
 	if Utils.FileExists(dockerFilePath) {
 		replace := true
@@ -249,7 +249,7 @@ func generateDockerfile(config *Utils.JapeConfig) {
 
 	templateName := config.Flavor+".got"
 
-	fs, err := gitfs.New(context.Background(), "github.com/JaneliaSciComp/jape/templates", gitfs.OptLocal(localDebug))
+	fs, err := gitfs.New(context.Background(), "github.com/JaneliaSciComp/maru/templates", gitfs.OptLocal(localDebug))
 	if err != nil {
 		Utils.PrintFatal("Failed creating gitfs: %s", err)
 	}
@@ -274,9 +274,9 @@ func generateDockerfile(config *Utils.JapeConfig) {
 	}
 }
 
-func printFinalInstructions(config *Utils.JapeConfig) {
+func printFinalInstructions(config *Utils.MaruConfig) {
 	versionTag := config.Name + ":" + config.Version
-	Utils.PrintSuccess("Jape project %s was successfully initialized.", versionTag)
-	Utils.PrintInfo("You can edit the jape.yaml file any time to update the project configuration.")
-	Utils.PrintInfo("Next run `jape build` to build and tag the container.")
+	Utils.PrintSuccess("Maru project %s was successfully initialized.", versionTag)
+	Utils.PrintInfo("You can edit the maru.yaml file any time to update the project configuration.")
+	Utils.PrintInfo("Next run `maru build` to build and tag the container.")
 }
