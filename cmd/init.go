@@ -125,6 +125,8 @@ jape.yaml file.
 		initFunction(config, isNewProject)
 
 		Utils.WriteProjectConfig(config)
+		Utils.PrintSuccess("Created %s", Utils.ConfFile)
+
 		generateDockerfile(config)
 		printFinalInstructions(config)
 	},
@@ -162,13 +164,6 @@ func initProjectFiji(config *Utils.JapeConfig, isNewProject bool) {
 	pc.PluginDir = askForString("Relative path to Fiji plugins:", pc.PluginDir)
 	pc.MacroDir = askForString("Relative path to Fiji macros:", pc.MacroDir)
 	pc.MacroName = askForString("Name of the Fiji macro file to run:", pc.MacroName)
-
-	macroPath := pc.MacroDir + "/" + pc.MacroName
-	if Utils.FileExists(macroPath) {
-		Utils.PrintSuccess("Found macro file at %s", macroPath)
-	} else {
-		Utils.PrintFatal("Could not find macro file at %s", macroPath)
-	}
 }
 
 func initProjectPython(config *Utils.JapeConfig, isNewProject bool) {

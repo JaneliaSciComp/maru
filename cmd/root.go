@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"github.com/spf13/cobra"
-	Utils "jape/utils"
 	"os"
 
 	homedir "github.com/mitchellh/go-homedir"
@@ -23,7 +22,7 @@ var rootCmd = &cobra.Command{
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		Utils.PrintFatal("%s", err)
+		//Utils.PrintFatal("%s", err)
 	}
 }
 

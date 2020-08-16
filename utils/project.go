@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 )
 
-const confFile = "jape.yaml"
+const ConfFile = "jape.yaml"
 
 type JapeConfig struct {
 	Name    string
@@ -61,24 +61,22 @@ func WriteProjectConfig(c *JapeConfig) {
 		PrintFatal("Error creating project config: %s", err)
 	}
 
-	err = ioutil.WriteFile(confFile, raw, 0644)
+	err = ioutil.WriteFile(ConfFile, raw, 0644)
 	if err != nil {
 		PrintFatal("Error writing project config file: %s", err)
 	}
-
-	PrintSuccess("Created %s", confFile)
 }
 
 // Reads the current project configuration from the working directory. Returns nil if no file exists.
 func ReadProjectConfig() *JapeConfig {
 
-	if !FileExists(confFile) {
+	if !FileExists(ConfFile) {
 		return nil
 	}
 
 	var c = &JapeConfig{}
 
-	yamlFile, err := ioutil.ReadFile(confFile)
+	yamlFile, err := ioutil.ReadFile(ConfFile)
 	if err != nil {
 		PrintFatal("Error reading config file: %s", err)
 	}
