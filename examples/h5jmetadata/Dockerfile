@@ -1,0 +1,26 @@
+# Staged build using builder container
+FROM janeliascicomp/builder:1.2.0 as builder
+ARG APP_TAG=master
+
+# Checkout and build the code
+WORKDIR /tmp/app
+RUN git clone --branch $APP_TAG --depth 1 https://github.com/JaneliaSciComp/jacs-tools-docker.git . \
+    && true
+
+# Create final image
+FROM continuumio/miniconda3:4.8.2
+
+RUN conda create -n myenv python=3.6 h5py=2.8.0 PyYAML=3.13 -y \
+    && conda clean --tarballs \
+    && mkdir -p /opt/conda/envs/myenv/etc/conda/activate.d \
+    # It's necessary to set TMPDIR for running with Singularity, because /opt/conda will be read-only
+    && echo "export TMPDIR=/tmp" > /opt/conda/envs/myenv/etc/conda/activate.d/env_vars.sh
+
+COPY --from=builder /tmp/app /app
+
+RUN echo "#!/bin/bash" >> /entrypoint.sh \
+    && echo "source /opt/conda/etc/profile.d/conda.sh" >> /entrypoint.sh \
+    && echo "conda activate myenv" >> /entrypoint.sh \
+    && echo 'python /app/h5j_metadata/src/h5j_metadata.py "$@"' >> /entrypoint.sh \
+    && chmod +x /entrypoint.sh
+ENTRYPOINT [ "/entrypoint.sh" ]

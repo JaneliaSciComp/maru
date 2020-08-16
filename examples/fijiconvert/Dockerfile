@@ -1,0 +1,18 @@
+# Staged build using builder container
+FROM janeliascicomp/builder:1.2.0 as builder
+ARG APP_TAG=master
+
+# Checkout and build the code
+WORKDIR /tmp/app
+RUN git clone --branch $APP_TAG --depth 1 https://github.com/JaneliaSciComp/jacs-tools-docker.git . \
+    && true
+
+# Create final image
+FROM janeliascicomp/fiji:fiji-openjdk-8
+
+
+COPY --from=builder /tmp/app/fiji_convert/fiji_plugins /opt/fiji/Fiji.app/plugins
+COPY --from=builder /tmp/app/fiji_convert/fiji_macros /opt/fiji/Fiji.app/macros
+
+
+ENTRYPOINT [ "/opt/fiji/entrypoint.sh", "-macro", "convert_stack.ijm" ]

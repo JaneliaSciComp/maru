@@ -1,0 +1,12 @@
+name: h5jmetadata
+version: 1.0.0
+flavor: python_conda
+config:
+  build:
+    repo_url: https://github.com/JaneliaSciComp/jacs-tools-docker.git
+    repo_tag: master
+    command: "true"
+  python_conda:
+    python_version: "3.6"
+    dependencies: h5py=2.8.0 PyYAML=3.13
+    relative_script_path: h5j_metadata/src/h5j_metadata.py

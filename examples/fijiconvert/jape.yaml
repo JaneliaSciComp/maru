@@ -1,0 +1,12 @@
+name: fijiconvert
+version: 1.0.0
+flavor: fiji_macro
+config:
+  build:
+    repo_url: https://github.com/JaneliaSciComp/jacs-tools-docker.git
+    repo_tag: master
+    command: "true"
+  fiji_macro:
+    plugin_dir: fiji_convert/fiji_plugins
+    macro_dir: fiji_convert/fiji_macros
+    macro_name: convert_stack.ijm
