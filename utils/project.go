@@ -8,9 +8,10 @@ import (
 const ConfFile = "maru.yaml"
 
 type MaruConfig struct {
-	Name    string
-	Version string
-	Flavor  string
+	MaruVersion string
+	Name        string
+	Version     string
+	Flavor      string
 	Config  struct {
 		Build                  struct {
 			RepoUrl            string `yaml:"repo_url"`
@@ -55,6 +56,9 @@ func NewMaruConfig(flavor string, name string, version string) *MaruConfig {
 
 // Writes the given project configuration to the working directory
 func WriteProjectConfig(c *MaruConfig) {
+
+	// Always overwrite the Maru version with the current version
+	c.MaruVersion = MaruVersion
 
 	raw, err := yaml.Marshal(&c)
 	if err != nil {

@@ -7,6 +7,8 @@ import (
 	Aurora "github.com/logrusorgru/aurora"
 )
 
+const MaruVersion = "0.1.0"
+
 // PrintMessage - print a normal message
 func PrintMessage(format string, a ...interface{}) {
 	fmt.Println(Aurora.Sprintf(Aurora.White(format), a...))

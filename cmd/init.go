@@ -26,7 +26,7 @@ type initFunctionType func (*Utils.MaruConfig, bool)
 
 var initCmd = &cobra.Command{
 	Use:   "init",
-	Short: "Initialize (or update) a Maru project in the current directory",
+	Short: "Initialize or update a Maru project in the current directory",
 	Long: `This command initializes or updates a Maru project in the current directory. If a Dockerfile already exists
 in the current directory, it can either be used to bootstrap a custom project or overwritten. If a maru.yaml file
 exists in the current directory, the initialization questionnaire will run again using the default values from the 
@@ -37,10 +37,10 @@ maru.yaml file.
 		Utils.PrintInfo("Configure Maru Project")
 
 		flavorMap := map[string]initFunctionType {
-			"executable": initProjectExecutable,
-			"python_conda": initProjectPython,
-			"java_maven": initProjectJavaMaven,
-			"fiji_macro": initProjectFiji,
+			"executable":      initProjectExecutable,
+			"python_conda":    initProjectPython,
+			"java_maven":      initProjectJavaMaven,
+			"fiji_macro":      initProjectFiji,
 			"matlab_compiled": initProjectMatlab,
 		}
 
