@@ -5,7 +5,6 @@ import (
 	Utils "jape/utils"
 )
 
-// setCmd represents the set command
 var setCmd = &cobra.Command{
 	Use:   "set [variable] [value]",
 	Short: "Set the values of variables in the Jape configuration",

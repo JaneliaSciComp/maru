@@ -16,7 +16,6 @@ import (
 	"github.com/docker/docker/client"
 )
 
-// buildCmd represents the build command
 var buildCmd = &cobra.Command{
 	Use:   "build",
 	Short: "Build a container for the current project",

@@ -11,7 +11,6 @@ import (
 	"os"
 )
 
-// runCmd represents the run command
 var runCmd = &cobra.Command{
 	Use:   "run",
 	Short: "Run the container for the current project",
