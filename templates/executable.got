@@ -7,16 +7,12 @@ WORKDIR /tmp/app
 RUN git clone --branch $APP_TAG --depth 1 {{ .Config.Build.RepoUrl }} . \
     && {{ .Config.Build.Command }}
 
-# Find the built jar, based on the version in the pom file
-RUN xq -r '.project.artifactId+"-"+.project.version+".jar"' pom.xml > filename \
-    && mv /tmp/app/target/`cat filename` app.jar
-
 # Create final image
-FROM openjdk:8
+FROM scientificlinux/sl:7
 
-COPY --from=builder /tmp/app/app.jar /app/app.jar
+COPY --from=builder /tmp/app /app
 
 RUN echo "#!/bin/bash" >> /entrypoint.sh \
-    && echo 'java -cp /app/app.jar {{ .Config.JavaMaven.MainClass }} "$@"' >> /entrypoint.sh \
+    && echo 'java -cp /app/app.jar {{ .Config.Generic.ExecutablePath }} "$@"' >> /entrypoint.sh \
     && chmod +x /entrypoint.sh
 ENTRYPOINT [ "/entrypoint.sh"]

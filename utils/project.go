@@ -12,43 +12,44 @@ type JapeConfig struct {
 	Version string
 	Flavor  string
 	Config  struct {
-
-		Repository  struct {
-			Url                string
-			Tag                string
-		} `yaml:"repo"`
-
-		Build       struct {
+		Build                  struct {
+			RepoUrl            string `yaml:"repo_url"`
+			RepoTag            string `yaml:"repo_tag"`
 			Command            string
-		} `yaml:"build"`
+		} `yaml:"build,omitempty"`
 
-		PythonConda struct {
+		Executable             struct {
+			RelativeExePath    string `yaml:"relative_exe_path"`
+		} `yaml:"executable,omitempty"`
+
+		PythonConda            struct {
 			PythonVersion      string `yaml:"python_version"`
 			Dependencies       string `yaml:"dependencies"`
 			RelativeScriptPath string `yaml:"relative_script_path"`
 		} `yaml:"python_conda,omitempty"`
 
-		JavaMaven   struct {
+		JavaMaven              struct {
 			MainClass          string `yaml:"main_class"`
 		} `yaml:"java_maven,omitempty"`
 
-		FijiMacro   struct {
+		FijiMacro              struct {
 			PluginDir          string `yaml:"plugin_dir"`
 			MacroDir           string `yaml:"macro_dir"`
 			MacroName          string `yaml:"macro_name"`
 		} `yaml:"fiji_macro,omitempty"`
 
-	} `yaml:"config"`
+		MatlabCompiled struct {
+
+		} `yaml:"matlab_compiled,omitempty"`
+
+	} `yaml:"config,omitempty"`
 }
 
-func NewJapeConfig(flavor string, name string) *JapeConfig {
+func NewJapeConfig(flavor string, name string, version string) *JapeConfig {
 	c := &JapeConfig{}
 	c.Name = name
 	c.Flavor = flavor
-	c.Version = "1.0.0"
-	c.Config.Repository.Url = "https://github.com/example/repo.git"
-	c.Config.Repository.Tag = "master"
-	c.Config.Build.Command = "true" // no-op by default
+	c.Version = version
 	return c
 }
 
@@ -64,6 +65,8 @@ func WriteProjectConfig(c *JapeConfig) {
 	if err != nil {
 		PrintFatal("Error writing project config file: %s", err)
 	}
+
+	PrintSuccess("Created %s", confFile)
 }
 
 // Reads the current project configuration from the working directory. Returns nil if no file exists.

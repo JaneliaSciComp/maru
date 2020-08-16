@@ -16,7 +16,7 @@ var runCmd = &cobra.Command{
 	Use:   "run",
 	Short: "Run the container for the current project",
 	Long: `Runs a docker container for the current Jape project. The current directory must contain a jape.yaml 
-file describing the project. You can create a project using the init and build commands.
+file describing the project. You can create a runnable project using the init and build commands.
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		run(args)
@@ -25,6 +25,7 @@ file describing the project. You can create a project using the init and build c
 
 func init() {
 	rootCmd.AddCommand(runCmd)
+	// Disable parsing because we want to pass through flags to the containerized application
 	runCmd.DisableFlagParsing = true
 }
 

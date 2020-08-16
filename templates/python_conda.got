@@ -4,7 +4,7 @@ ARG APP_TAG=master
 
 # Checkout and build the code
 WORKDIR /tmp/app
-RUN git clone --branch $APP_TAG --depth 1 {{ .Config.Repository.Url }} . \
+RUN git clone --branch $APP_TAG --depth 1 {{ .Config.Build.RepoUrl }} . \
     && {{ .Config.Build.Command }}
 
 # Create final image
@@ -16,12 +16,11 @@ RUN conda create -n myenv python={{ .Config.PythonConda.PythonVersion }} {{ .Con
     # It's necessary to set TMPDIR for running with Singularity, because /opt/conda will be read-only
     && echo "export TMPDIR=/tmp" > /opt/conda/envs/myenv/etc/conda/activate.d/env_vars.sh
 
-WORKDIR /app
+COPY --from=builder /tmp/app /app
+
 RUN echo "#!/bin/bash" >> /entrypoint.sh \
     && echo "source /opt/conda/etc/profile.d/conda.sh" >> /entrypoint.sh \
     && echo "conda activate myenv" >> /entrypoint.sh \
     && echo 'python /app/{{ .Config.PythonConda.RelativeScriptPath }} "$@"' >> /entrypoint.sh \
     && chmod +x /entrypoint.sh
-COPY --from=builder /tmp/app /app
-
 ENTRYPOINT [ "/entrypoint.sh" ]
