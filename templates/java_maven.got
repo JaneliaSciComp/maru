@@ -2,11 +2,11 @@
 
 # Staged build using builder container
 FROM janeliascicomp/builder:1.2.0 as builder
-ARG APP_TAG=master
+ARG $GIT_TAG=master
 
 # Checkout and build the code
 WORKDIR /tmp/app
-RUN git clone --branch $APP_TAG --depth 1 {{ .Config.Build.RepoUrl }} . \
+RUN git clone --branch $GIT_TAG --depth 1 {{ .Config.Build.RepoUrl }} . \
     && {{ .Config.Build.Command }}
 
 # Find the built jar, based on the version in the pom file

@@ -3,30 +3,34 @@ package utils
 import (
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
+	"strings"
 )
 
 const ConfFile = "maru.yaml"
 
 type MaruConfig struct {
+
 	MaruVersion string
 	Name        string
 	Version     string
+	Namespaces  []string          `yaml:"namespaces,omitempty"`
+	BuildArgs   map[string]string `yaml:"build_args,omitempty"`
 	Flavor      string
+
 	Config  struct {
 		Build                  struct {
 			RepoUrl            string `yaml:"repo_url"`
-			RepoTag            string `yaml:"repo_tag"`
-			Command            string
+			Command            string `yaml:"command,omitempty"`
 		} `yaml:"build,omitempty"`
 
 		Executable             struct {
-			RelativeExePath    string `yaml:"relative_exe_path"`
+			RelativeExePath    string `yaml:"exe_path"`
 		} `yaml:"executable,omitempty"`
 
 		PythonConda            struct {
 			PythonVersion      string `yaml:"python_version"`
 			Dependencies       string `yaml:"dependencies"`
-			RelativeScriptPath string `yaml:"relative_script_path"`
+			RelativeScriptPath string `yaml:"script_path"`
 		} `yaml:"python_conda,omitempty"`
 
 		JavaMaven              struct {
@@ -44,6 +48,32 @@ type MaruConfig struct {
 		} `yaml:"matlab_compiled,omitempty"`
 
 	} `yaml:"config,omitempty"`
+}
+
+func (c *MaruConfig) GetBuildArg(key string) string {
+	// TODO: this needs a more general solution to variable interpolation
+	s := strings.Replace(c.BuildArgs[key], "$version", c.Version, 1)
+	return strings.Replace(s, "$git_tag", c.BuildArgs["GIT_TAG"], 1)
+}
+
+func (c *MaruConfig) GetRepoTag() string {
+	return c.GetBuildArg("GIT_TAG")
+}
+
+func (c *MaruConfig) GetVersion() string {
+	return strings.Replace(c.Version, "$git_tag", c.BuildArgs["GIT_TAG"], 1)
+}
+
+func (c *MaruConfig) GetNameVersion() string {
+	return c.Name + ":" + c.GetVersion()
+}
+
+func (c *MaruConfig) GetDockerTag(namespace string) string {
+	return namespace + "/" + c.GetNameVersion()
+}
+
+func (c *MaruConfig) HasNamespaces() bool {
+	return c.Namespaces != nil && len(c.Namespaces)>0
 }
 
 func NewMaruConfig(flavor string, name string, version string) *MaruConfig {
@@ -93,3 +123,10 @@ func ReadProjectConfig() *MaruConfig {
 	return c
 }
 
+func ReadMandatoryProjectConfig() *MaruConfig {
+	var config = ReadProjectConfig()
+	if config == nil {
+		PrintFatal("Current directory does not contain a Maru project configuration")
+	}
+	return config
+}

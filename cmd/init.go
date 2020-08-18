@@ -12,10 +12,8 @@ import (
 	"net/url"
 	"os"
 	"path"
-	"path/filepath"
 	"regexp"
 	"sort"
-	"strings"
 )
 
 // When running with `LOCAL_DEBUG=.`, the local repository will be used instead of the remote github.
@@ -69,8 +67,8 @@ maru.yaml file.
 			isNewProject = true
 			config = Utils.NewMaruConfig("", "", "1.0.0")
 			config.Config.Build.RepoUrl = "https://github.com/example/repo.git"
-			config.Config.Build.RepoTag = "master"
-			config.Config.Build.Command = "true" // no-op by default
+			config.BuildArgs["GIT_TAG"] = "$version"
+			config.Config.Build.Command = ""
 		}
 
 		flavors := make([]string, 0, len(flavorMap))
@@ -92,8 +90,23 @@ maru.yaml file.
 		}
 		config.Flavor = flavor
 
+		// Validate flavor before going further
+		initFunction := flavorMap[flavor]
+		if initFunction==nil {
+			Utils.PrintFatal("Flavor is currently not supported: %s", flavor)
+			os.Exit(1)
+		}
+
+		Utils.PrintInfo("\nWhich git repository should be built inside the container when ^maru build^ is called?")
 		config.Config.Build.RepoUrl = askForString("Git URL:", config.Config.Build.RepoUrl)
-		config.Config.Build.RepoTag = askForString("Git tag:", config.Config.Build.RepoTag)
+
+		Utils.PrintInfo("\nWhich tag or branch should be built when ^maru build^ is called?")
+		Utils.PrintMessage(
+`You can use ^master^ to build the master branch, but that's not recommended for creating reproducible containers.
+The simplest best practice is to tag your code with a version, and then use that same version as the container tag.
+The default value of ^$version^ enables that workflow. 
+`)
+		config.BuildArgs["GIT_TAG"] = askForString("Git tag:", config.BuildArgs["GIT_TAG"])
 
 		u, err := url.Parse(config.Config.Build.RepoUrl)
 		if err != nil {
@@ -108,24 +121,40 @@ maru.yaml file.
 			Utils.PrintFatal("URL must contain valid hostname")
 		}
 
+		// Default container name is the name of the current working directory
 		if config.Name == "" {
-			basename := path.Base(u.Path)
-			config.Name = strings.ToLower(strings.TrimSuffix(basename, filepath.Ext(basename)))
+			cwd, err := os.Getwd()
+			if err != nil {
+				Utils.PrintFatal("%s", err)
+			}
+			cwdName := path.Base(cwd)
+			config.Name = cwdName
 		}
 
+		Utils.PrintInfo("\nWhat is the name for this container?")
+		Utils.PrintMessage(
+`The name should only contain lowercase letters and underscores. As an example, ^scientificlinux/sl:7^ is:
+    container namespace: scientificlinux
+    container name:      sl
+    container version:   7
+`);
 		config.Name = askForString("Container name:", config.Name)
+
+		Utils.PrintInfo("\nWhat is the current version for this container?")
+		Utils.PrintMessage(`This should change over time, and can be easily updated with ^maru set version^.
+`)
 		config.Version = askForString("Container version:", config.Version)
 
 		// Invoke the init function for the chosen project flavor
-		initFunction := flavorMap[flavor]
-		if initFunction==nil {
-			Utils.PrintFatal("Flavor is currently not supported: %s", flavor)
-			os.Exit(1)
-		}
 		initFunction(config, isNewProject)
 
 		Utils.WriteProjectConfig(config)
 		Utils.PrintSuccess("Created %s", Utils.ConfFile)
+
+		// Replace empty build with a no-op so that bash script still works
+		if config.Config.Build.Command=="" {
+			config.Config.Build.Command = "true"
+		}
 
 		generateDockerfile(config)
 		printFinalInstructions(config)
@@ -275,7 +304,7 @@ func generateDockerfile(config *Utils.MaruConfig) {
 }
 
 func printFinalInstructions(config *Utils.MaruConfig) {
-	versionTag := config.Name + ":" + config.Version
+	versionTag := config.GetNameVersion()
 	Utils.PrintSuccess("Maru project %s was successfully initialized.", versionTag)
 	Utils.PrintInfo("You can edit the maru.yaml file any time to update the project configuration.")
 	Utils.PrintInfo("Next run `maru build` to build and tag the container.")

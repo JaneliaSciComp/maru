@@ -1,11 +1,14 @@
 maruversion: 0.1.0
 name: bigstitcher
 version: 0.5.10
+namespaces:
+- registry.int.janelia.org/jacs-tools
+build_args:
+  GIT_TAG: BigStitcher-$version
 flavor: java_maven
 config:
   build:
     repo_url: https://github.com/PreibischLab/BigStitcher.git
-    repo_tag: BigStitcher-0.5.10
     command: mvn -Pfatjar package
   java_maven:
     main_class: net.preibisch.mvrecon.fiji.plugin.resave.Resave_N5

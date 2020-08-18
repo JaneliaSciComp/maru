@@ -36,10 +36,10 @@ func runBuild() {
 	// as per https://github.com/moby/moby/issues/40185
 
 	config := Utils.ReadProjectConfig()
-	versionTag := config.Name + ":" + config.Version
+	versionTag := config.GetNameVersion()
 
 	Utils.PrintInfo("Building %s from %s @ %s", versionTag,
-		config.Config.Build.RepoTag, config.Config.Build.RepoUrl)
+		config.GetRepoTag(), config.Config.Build.RepoUrl)
 
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
@@ -64,8 +64,12 @@ func runBuild() {
 
 	Utils.PrintMessage("Building image...")
 
+	// Interpolate map values to string pointers
 	buildArgs := make(map[string]*string)
-	buildArgs["APP_TAG"] = &config.Config.Build.RepoTag
+	for key, _ := range config.BuildArgs {
+		v := config.GetBuildArg(key)
+		buildArgs[key] = &v
+	}
 
 	options := types.ImageBuildOptions{
 		SuppressOutput: false,

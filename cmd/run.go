@@ -31,7 +31,7 @@ func init() {
 func run(args []string) {
 
 	config := Utils.ReadProjectConfig()
-	versionTag := config.Name+":"+config.Version
+	versionTag := config.GetNameVersion()
 
 	Utils.PrintInfo("Running %s", versionTag)
 

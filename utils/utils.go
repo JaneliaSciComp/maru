@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	Aurora "github.com/logrusorgru/aurora"
 )
@@ -11,12 +12,40 @@ const MaruVersion = "0.1.0"
 
 // PrintMessage - print a normal message
 func PrintMessage(format string, a ...interface{}) {
-	fmt.Println(Aurora.Sprintf(Aurora.White(format), a...))
+
+	finalString := fmt.Sprintf(format, a...)
+	// TODO: replace all backticks in the codebase with carrots to not conflict with multiline strings
+	fixedString := strings.ReplaceAll(finalString, "`", "^")
+	parts := strings.Split(fixedString, "^")
+
+	for i, s := range parts {
+		if i % 2 == 0 {
+			fmt.Print(s)
+		} else {
+			fmt.Print(Aurora.BrightCyan(s))
+		}
+	}
+
+	fmt.Println()
 }
 
 // PrintInfo - print an info message
 func PrintInfo(format string, a ...interface{}) {
-	fmt.Println(Aurora.Sprintf(Aurora.BrightBlue(format), a...))
+
+	finalString := fmt.Sprintf(format, a...)
+	// TODO: replace all backticks in the codebase with carrots to not conflict with multiline strings
+	fixedString := strings.ReplaceAll(finalString, "`", "^")
+	parts := strings.Split(fixedString, "^")
+
+	for i, s := range parts {
+		if i % 2 == 0 {
+			fmt.Print(Aurora.BrightBlue(s))
+		} else {
+			fmt.Print(Aurora.BrightCyan(s))
+		}
+	}
+
+	fmt.Println()
 }
 
 // PrintSuccess - prints an error message
