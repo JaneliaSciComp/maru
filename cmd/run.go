@@ -29,6 +29,10 @@ func init() {
 }
 
 func run(args []string) {
+	RunContainer(args, nil)
+}
+
+func RunContainer(args []string, entrypoint []string) {
 
 	config := Utils.ReadProjectConfig()
 	versionTag := config.GetNameVersion()
@@ -48,6 +52,9 @@ func run(args []string) {
 		Cmd:          args,
 		Tty:          true,
 		AttachStdin:  true,
+		AttachStderr: true,
+		AttachStdout: true,
+		Entrypoint:   entrypoint,
 	}, nil, nil, nil, "")
 	if err != nil {
 		Utils.PrintFatal("%s", err)
