@@ -14,8 +14,8 @@ import (
 
 var shellCmd = &cobra.Command{
 	Use:   "shell",
-	Short: "Starts a BASH shell into the current container",
-	Long: `Starts a BASH shell into the current container`,
+	Short: "Starts a Bash shell into the current container",
+	Long: `Starts a Bash shell into the current container. Mainly used for debugging.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		RunInteractive([]string{"/bin/bash"}, nil)
 	},
@@ -31,7 +31,6 @@ func RunInteractive(entrypoint []string, args []string) {
 
 	config := Utils.ReadProjectConfig()
 	versionTag := config.GetNameVersion()
-
 	Utils.PrintInfo("Shell into %s", versionTag)
 
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())

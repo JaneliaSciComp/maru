@@ -9,6 +9,7 @@ import (
 	"io"
 	Utils "maru/utils"
 	"os"
+	"strings"
 )
 
 var runCmd = &cobra.Command{
@@ -29,15 +30,15 @@ func init() {
 }
 
 func run(args []string) {
-	RunContainer(args, nil)
+	RunContainer(nil, args)
 }
 
-func RunContainer(args []string, entrypoint []string) {
+func RunContainer(entrypoint []string, args []string) {
 
 	config := Utils.ReadProjectConfig()
 	versionTag := config.GetNameVersion()
-
 	Utils.PrintInfo("Running %s", versionTag)
+	Utils.PrintMessage("% ^docker run -t %s %s^", versionTag, strings.Join(args, " "))
 
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
@@ -51,9 +52,6 @@ func RunContainer(args []string, entrypoint []string) {
 		Image:        versionTag,
 		Cmd:          args,
 		Tty:          true,
-		AttachStdin:  true,
-		AttachStderr: true,
-		AttachStdout: true,
 		Entrypoint:   entrypoint,
 	}, nil, nil, nil, "")
 	if err != nil {
