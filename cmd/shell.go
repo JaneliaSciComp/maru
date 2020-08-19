@@ -10,6 +10,7 @@ import (
 	"io"
 	Utils "maru/utils"
 	"os"
+	"strings"
 )
 
 var shellCmd = &cobra.Command{
@@ -31,7 +32,10 @@ func RunInteractive(entrypoint []string, args []string) {
 
 	config := Utils.ReadProjectConfig()
 	versionTag := config.GetNameVersion()
-	Utils.PrintInfo("Shell into %s", versionTag)
+	Utils.PrintInfo("Creating interactive shell for %s", versionTag)
+
+	Utils.PrintMessage("%% ^docker run -it %s--entrypoint=/bin/bash %s %s^",
+		GetEnvVariableString(), versionTag, strings.Join(args, " "))
 
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
@@ -49,6 +53,7 @@ func RunInteractive(entrypoint []string, args []string) {
 		AttachStdout: true,
 		StdinOnce:    true,
 		Entrypoint:   entrypoint,
+		Env:          EnvParam,
 	}, nil, nil, nil, "")
 	if err != nil {
 		Utils.PrintFatal("%s", err)

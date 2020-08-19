@@ -38,7 +38,9 @@ func RunContainer(entrypoint []string, args []string) {
 	config := Utils.ReadProjectConfig()
 	versionTag := config.GetNameVersion()
 	Utils.PrintInfo("Running %s", versionTag)
-	Utils.PrintMessage("% ^docker run -t %s %s^", versionTag, strings.Join(args, " "))
+
+	Utils.PrintMessage("%% ^docker run %s-t %s %s^",
+		GetEnvVariableString(), versionTag, strings.Join(args, " "))
 
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
@@ -53,6 +55,7 @@ func RunContainer(entrypoint []string, args []string) {
 		Cmd:          args,
 		Tty:          true,
 		Entrypoint:   entrypoint,
+		Env:          EnvParam,
 	}, nil, nil, nil, "")
 	if err != nil {
 		Utils.PrintFatal("%s", err)
@@ -81,4 +84,17 @@ func RunContainer(entrypoint []string, args []string) {
 	if _, err := io.Copy(os.Stdout, out); err != nil {
 		Utils.PrintFatal("%s", err)
 	}
+}
+
+func GetEnvVariableString() string {
+
+	envParams := make([]string, len(EnvParam)+1)
+	if EnvParam != nil {
+		for i, v := range EnvParam {
+			envParams[i] = "-e " + v
+		}
+		envParams[len(EnvParam)] = ""
+	}
+
+	return strings.Join(envParams, " ")
 }

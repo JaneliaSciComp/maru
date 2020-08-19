@@ -23,12 +23,12 @@ var pushCmd = &cobra.Command{
 			for _, n := range config.Namespaces {
 				registryTag := config.GetDockerTag(n)
 
-				Utils.PrintMessage("Tagging with %s", registryTag)
+				Utils.PrintMessage("%% ^docker tag %s %s^", imageName, registryTag)
 				err := Utils.RunCommand("docker", "tag", imageName, registryTag)
 				if err != nil {
 					Utils.PrintError("Command `docker tag` failed with %s", err)
 				} else {
-					Utils.PrintMessage("Pushing to %s", registryTag)
+					Utils.PrintMessage("%% ^docker push %s^", registryTag)
 					err := Utils.RunCommand("docker", "push", registryTag)
 					if err != nil {
 						Utils.PrintError("Command `docker push` failed with %s", err)
