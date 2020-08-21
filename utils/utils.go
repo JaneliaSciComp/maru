@@ -9,13 +9,12 @@ import (
 	"os/exec"
 	"strings"
 
-	"crypto/sha256"
 	Aurora "github.com/logrusorgru/aurora"
-	"io"
 )
 
 const MaruVersion = "0.1.0"
 const DockerFilePath = "Dockerfile"
+
 var Debug = false
 
 type ColorFunc func(arg interface{}) Aurora.Value
@@ -83,18 +82,6 @@ func print(colorFunc ColorFunc, format string, a ...interface{}) {
 	fmt.Println()
 }
 
-// Mkdir - Make the given path
-func Mkdir(path string) bool {
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		e := os.Mkdir(path, 0777)
-		if e == nil {
-			return true
-		}
-		PrintFatal("%s", e)
-	}
-	return false
-}
-
 // FileExists - returns true if the given file exists
 func FileExists(filename string) bool {
 	info, err := os.Stat(filename)
@@ -104,6 +91,7 @@ func FileExists(filename string) bool {
 	return !info.IsDir()
 }
 
+// RunCommand - runs the given command synchronously and prints any output to STDOUT/STDERR
 func RunCommand(name string, arg ...string) error {
 	cmd := exec.Command(name, arg...)
 	cmd.Stdout = os.Stdout
@@ -144,17 +132,8 @@ func AskForBool(msg string, defaultValue bool) bool {
 	return value
 }
 
-func getChecksum(s string) string {
-
-	h := sha256.New()
-	if _, err := io.Copy(h, strings.NewReader(s)); err != nil {
-		PrintFatal("%s",err)
-	}
-
-	return fmt.Sprintf("%x", h.Sum(nil))
-}
-
 // Read the checksum encoded in the Dockerfile
+// Assumes that the first line of the Dockerfile contains a comment with the checksum
 func GetChecksumFromDockerfile() string {
 
 	f, err := os.Open(DockerFilePath)
@@ -171,37 +150,6 @@ func GetChecksumFromDockerfile() string {
 		PrintFatal("%s", err)
 	}
 	return strings.TrimSpace(strings.Replace(first, "# ", "", 1))
-}
-
-func GetChecksumOfConfig() string {
-
-	// Extract just the "config" section of the configuration file
-	f2, err := os.Open(ConfFile)
-	if err != nil {
-		PrintFatal("%s",err)
-	}
-	defer f2.Close()
-	scanner2 := bufio.NewScanner(f2)
-	var sb strings.Builder
-	rec := false
-	for scanner2.Scan() {
-		line := scanner2.Text()
-		if strings.TrimSpace(line) == "config:" {
-			rec = true // start recording
-		} else if rec && strings.TrimLeft(line, " \t") == line {
-			rec = false // stop recording when we reach another top level attribute
-		}
-		if rec {
-			sb.WriteString(line)
-			sb.WriteRune('\n')
-		}
-	}
-	if err := scanner2.Err(); err != nil {
-		PrintFatal("%s", err)
-	}
-
-	// Compute the current checksum
-	return getChecksum(sb.String())
 }
 
 func TestChecksum(newChecksum string) bool {
