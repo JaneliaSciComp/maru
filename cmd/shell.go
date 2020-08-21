@@ -30,11 +30,11 @@ func init() {
 // https://stackoverflow.com/questions/58732588/accept-user-input-os-stdin-to-container-using-golang-docker-sdk-interactive-co
 func RunInteractive(entrypoint []string, args []string) {
 
-	config := Utils.ReadProjectConfig()
+	config := Utils.ReadMandatoryProjectConfig()
 	versionTag := config.GetNameVersion()
 	Utils.PrintInfo("Creating interactive shell for %s", versionTag)
 
-	Utils.PrintMessage("%% ^docker run -it %s--entrypoint=/bin/bash %s %s^",
+	Utils.PrintHint("%% docker run -it %s--entrypoint=/bin/bash %s %s",
 		GetEnvVariableString(), versionTag, strings.Join(args, " "))
 
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
@@ -54,6 +54,7 @@ func RunInteractive(entrypoint []string, args []string) {
 		StdinOnce:    true,
 		Entrypoint:   entrypoint,
 		Env:          EnvParam,
+		User:         UserParam,
 	}, nil, nil, nil, "")
 	if err != nil {
 		Utils.PrintFatal("%s", err)

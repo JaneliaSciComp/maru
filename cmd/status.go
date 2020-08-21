@@ -13,14 +13,15 @@ var statusCmd = &cobra.Command{
 
 		var config = Utils.ReadMandatoryProjectConfig()
 		Utils.PrintInfo("%s %s", config.Name, config.Version)
-		Utils.PrintMessage("  Flavor: %s", config.Flavor)
-		Utils.PrintMessage("  Namespace Tags:")
-		if config.HasNamespaces() {
-			for _, n := range config.Namespaces {
-				Utils.PrintMessage("  - %s", config.GetDockerTag(n))
+		Utils.PrintMessage("flavor: %s", config.Flavor)
+		Utils.PrintMessage("local tags:")
+		Utils.PrintMessage("- %s", config.GetNameLatest())
+		Utils.PrintMessage("- %s", config.GetNameVersion())
+		if config.HasRemotes() {
+			Utils.PrintMessage("remote tags:")
+			for _, n := range config.Remotes {
+				Utils.PrintMessage("- %s", config.GetDockerTag(n))
 			}
-		} else {
-			Utils.PrintMessage("  - %s", config.GetNameVersion())
 		}
 	},
 }

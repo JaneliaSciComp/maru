@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"crypto/sha256"
+	"fmt"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"strings"
@@ -10,14 +12,15 @@ const ConfFile = "maru.yaml"
 
 type MaruConfig struct {
 
-	MaruVersion string
-	Name        string
-	Version     string
-	Namespaces  []string          `yaml:"namespaces,omitempty"`
-	BuildArgs   map[string]string `yaml:"build_args,omitempty"`
-	Flavor      string
+	ConfigChecksum string            `yaml:"-"`
+	MaruVersion    string
+	Name           string
+	Version        string
+	Remotes        []string          `yaml:"remotes,omitempty"`
+	BuildArgs      map[string]string `yaml:"build_args,omitempty"`
+	Flavor         string
 
-	Config  struct {
+	Config struct {
 		Build                  struct {
 			RepoUrl            string `yaml:"repo_url"`
 			Command            string `yaml:"command,omitempty"`
@@ -68,12 +71,24 @@ func (c *MaruConfig) GetNameVersion() string {
 	return c.Name + ":" + c.GetVersion()
 }
 
-func (c *MaruConfig) GetDockerTag(namespace string) string {
-	return namespace + "/" + c.GetNameVersion()
+func (c *MaruConfig) GetNameLatest() string {
+	return c.Name + ":latest"
 }
 
-func (c *MaruConfig) HasNamespaces() bool {
-	return c.Namespaces != nil && len(c.Namespaces)>0
+func (c *MaruConfig) GetDockerTag(remote string) string {
+	return remote + "/" + c.GetNameVersion()
+}
+
+func (c *MaruConfig) HasRemotes() bool {
+	return c.Remotes != nil && len(c.Remotes)>0
+}
+
+func (c *MaruConfig) GetConfigChecksum() string {
+	h := sha256.New()
+	s := fmt.Sprintf("%v", c.Config)
+	h.Write([]byte(s))
+	sum := h.Sum(nil)
+	return fmt.Sprintf("%x", sum)
 }
 
 func NewMaruConfig(flavor string, name string, version string) *MaruConfig {

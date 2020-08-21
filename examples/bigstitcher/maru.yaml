@@ -1,8 +1,9 @@
 maruversion: 0.1.0
 name: bigstitcher
 version: 0.5.10
-namespaces:
+remotes:
 - janeliascicomp
+- registry.int.janelia.org/janeliascicomp
 build_args:
   GIT_TAG: BigStitcher-$version
 flavor: java_maven

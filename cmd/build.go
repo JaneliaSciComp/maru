@@ -3,8 +3,8 @@ package cmd
 import (
 	"context"
 	"io/ioutil"
-	Utils "maru/utils"
 	"log"
+	Utils "maru/utils"
 	"os"
 
 	"github.com/docker/docker/pkg/jsonmessage"
@@ -32,14 +32,26 @@ func init() {
 }
 
 func runBuild() {
-	// To get the Docker client working, I had to `go get github.com/docker/docker@master`
-	// as per https://github.com/moby/moby/issues/40185
 
-	config := Utils.ReadProjectConfig()
+	config := Utils.ReadMandatoryProjectConfig()
 	versionTag := config.GetNameVersion()
+
+	checksum := config.GetConfigChecksum()
+	if !Utils.TestChecksum(checksum) {
+		Utils.PrintDebug("Checksum does not match: %s", checksum)
+		if Utils.AskForBool("The project configuration has changed. Do you want to regenerate the Dockerfile?", true) {
+			Init()
+			if !Utils.AskForBool("Proceed with container build?", true) {
+				os.Exit(0)
+			}
+		}
+	}
 
 	Utils.PrintInfo("Building %s from %s @ %s", versionTag,
 		config.GetRepoTag(), config.Config.Build.RepoUrl)
+
+	// To get the Docker client working, I had to `go get github.com/docker/docker@master`
+	// as per https://github.com/moby/moby/issues/40185
 
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
@@ -54,6 +66,7 @@ func runBuild() {
 		log.Fatal(err)
 	}
 	defer os.Remove(file.Name())
+	Utils.PrintDebug("Creating temporary build context at %s", file.Name())
 
 	tar := new(archivex.TarFile)
 	tar.Create(file.Name())

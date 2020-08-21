@@ -9,6 +9,7 @@ import (
 
 var cfgFile string
 var EnvParam []string
+var UserParam string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -29,10 +30,13 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
+	// Global configuration
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.maru.yaml)")
+	rootCmd.PersistentFlags().BoolVarP(&Utils.Debug, "debug", "d", false, "print debug output")
 
-	rootCmd.PersistentFlags().StringArrayVarP(&EnvParam,"env", "e", nil,
-	"Set environment variables for the running container, e.g. when using run or shell")
+	// Docker parameters
+	rootCmd.PersistentFlags().StringArrayVarP(&EnvParam,"env", "e", nil, "Set environment variables for the running container, e.g. when using run or shell")
+	rootCmd.PersistentFlags().StringVarP(&UserParam,"user", "u", "", "Set user for the running container, e.g. when using run or shell")
 }
 
 // initConfig reads in config file and ENV variables if set.
