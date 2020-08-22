@@ -94,6 +94,7 @@ func FileExists(filename string) bool {
 // RunCommand - runs the given command synchronously and prints any output to STDOUT/STDERR
 func RunCommand(name string, arg ...string) error {
 	cmd := exec.Command(name, arg...)
+	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()

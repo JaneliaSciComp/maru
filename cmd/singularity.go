@@ -58,14 +58,15 @@ var singularityRunCmd = &cobra.Command{
 		}
 
 		var config = Utils.ReadMandatoryProjectConfig()
+		Utils.PrintInfo("Running %s", config.GetNameVersion())
 		imageName := config.GetNameVersion()
-
+		
 		// The usual slashes after docker-daemon are not accepted here
 		// https://github.com/hpcng/singularity/issues/4734
 		Utils.PrintHint("%% singularity run docker-daemon:%s", imageName)
 		err := Utils.RunCommand("singularity", "run", "docker-daemon:"+imageName)
 		if err != nil {
-			Utils.PrintError("Singularity run failed: %s", err)
+			Utils.PrintDebug("Singularity run failed: %s", err)
 		}
 	},
 }
