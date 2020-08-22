@@ -13,10 +13,10 @@ import (
 )
 
 var runCmd = &cobra.Command{
-	Use:   "run",
+	Use:   "run [args]",
 	Short: "Run the container for the current project",
-	Long: `Runs a docker container for the current Maru project. The current directory must contain a maru.yaml 
-file describing the project. You can create a runnable project using the init and build commands.
+	Long: `Runs a docker container for the current Maru project, passing any arguments directly to the container's entrypoint. 
+The current directory must contain a maru.yaml file describing the project. You can create a runnable project using the init and build commands. 
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		run(args)
