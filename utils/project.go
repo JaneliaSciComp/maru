@@ -110,6 +110,7 @@ func WriteProjectConfig(c *MaruConfig) {
 		PrintFatal("Error creating project config: %s", err)
 	}
 
+	PrintDebug("Writing to %s...", ConfFile)
 	err = ioutil.WriteFile(ConfFile, raw, 0644)
 	if err != nil {
 		PrintFatal("Error writing project config file: %s", err)
@@ -119,12 +120,14 @@ func WriteProjectConfig(c *MaruConfig) {
 // Reads the current project configuration from the working directory. Returns nil if no file exists.
 func ReadProjectConfig() *MaruConfig {
 
+	PrintDebug("Checking for %s...", ConfFile)
 	if !FileExists(ConfFile) {
 		return nil
 	}
 
 	var c = &MaruConfig{}
 
+	PrintDebug("Reading from %s...", ConfFile)
 	yamlFile, err := ioutil.ReadFile(ConfFile)
 	if err != nil {
 		PrintFatal("Error reading config file: %s", err)

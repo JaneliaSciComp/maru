@@ -51,7 +51,7 @@ func PrintError(format string, a ...interface{}) {
 
 // PrintFatal - prints an error message and exits with code 2
 func PrintFatal(format string, a ...interface{}) {
-	print(Aurora.BrightRed, "\u2714 "+format, a...)
+	print(Aurora.BrightRed, "\u2718 "+format, a...)
 	os.Exit(2)
 }
 
