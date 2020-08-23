@@ -50,7 +50,9 @@ maru singularity run [args to app]
 
 ## Documentation
 
-Maru has lots of features for building, releasing, and distributing your containers. For more details, see the [User Manual](docs/UserManual.md).
+Maru has lots of features for building, releasing, and distributing your containers. 
+
+For more details, see the [User Manual](docs/UserManual.md).
 
 For developers, there are some notes available about [building and releasing Maru](docs/Development.md).
 
