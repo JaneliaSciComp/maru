@@ -45,7 +45,7 @@ go install
 
 Any time the templates change, the serialization needs to be updated as follows:
 ```
-go generate
+go generate ./...
 ```
 
 ## Testing
