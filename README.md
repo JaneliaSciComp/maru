@@ -11,13 +11,13 @@ Maru runs on both Linux and MacOS systems. You need to have [Docker installed](h
 ### Linux
 This installs the `maru` binary into /usr/local/bin:
 ```
-curl -sL https://github.com/JaneliaSciComp/maru/releases/latest/download/maru_linux_x86_64.tar.gz | tar -xz -C /usr/local/bin
+sudo curl -sL https://data.janelia.org/maru-linux | tar -xz -C /usr/local/bin
 ```
 
 ### MacOS
 This installs the `maru` binary into /usr/local/bin:
 ```
-sudo curl -sL https://github.com/JaneliaSciComp/maru/releases/latest/download/maru_macos_x86_64.tar.gz | tar -xz -C /usr/local/bin
+curl -sL https://data.janelia.org/maru-macos | tar -xz -C /usr/local/bin
 ```
 
 You can also download the [latest release](https://github.com/JaneliaSciComp/maru/releases/latest) and copy it to anywhere in your `$PATH`.
