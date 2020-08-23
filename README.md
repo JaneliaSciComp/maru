@@ -26,22 +26,22 @@ You can also download the [latest release](https://github.com/JaneliaSciComp/mar
 
 Maru assumes that your project is committed to a remote git repository. During the container build, Maru will clone your repository and run any build commands you specify.
 
-First, create a new directory for your Maru project configuration and tell Maru how to find and build your code. You can name the directory anything you like:
+First, initialize the project configuration:
 ```
-mkdir myproject ; cd myproject
 maru init
 ```
+This is an interactive process that will ask you questions about where to find your project and how to build it.
 
-Now build your project into a Docker container:
+Now you can build your project into a Docker container:
 ```
 maru build
 ```
 
-You can run the current version of your Docker container:
+From your project directory, you can always run the current version of your Docker container:
 ```
 maru run [args to app]
 ```
-This will output the Docker command used to run the container, which you can then use in scripts or pipelines to integrate your app into a larger workflow.
+This will also output the Docker command used to run the container, which you can then use in scripts or pipelines to integrate your app into a larger workflow.
 
 You can also run the Docker container using Singularity (e.g. on an HPC cluster):
 ```
@@ -50,7 +50,7 @@ maru singularity run [args to app]
 
 ## Documentation
 
-For more details, see the [docs/UserManual.md](User Manual).
+Maru has lots of features for building, releasing, and distributing your containers. For more details, see the [User Manual](docs/UserManual.md).
 
-For developers, there are some notes available about [docs/Development.md](building and releasing Maru)
+For developers, there are some notes available about [building and releasing Maru](docs/Development.md).
 
