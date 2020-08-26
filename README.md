@@ -12,12 +12,12 @@ The following one-liners install the `maru` binary into /usr/local/bin:
 
 ### Linux
 ```
-sudo curl -sL https://data.janelia.org/maru-linux | tar -xz -C /usr/local/bin
+curl -skL https://data.janelia.org/maru-linux | sudo tar -xz -C /usr/local/bin
 ```
 
 ### MacOS
 ```
-curl -sL https://data.janelia.org/maru-macos | tar -xz -C /usr/local/bin
+curl -skL https://data.janelia.org/maru-macos | sudo tar -xz -C /usr/local/bin
 ```
 
 You can also download the [latest release](https://github.com/JaneliaSciComp/maru/releases/latest) and manually copy it to anywhere in your `$PATH`.
