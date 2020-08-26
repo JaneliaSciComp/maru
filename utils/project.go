@@ -54,10 +54,21 @@ type MaruConfig struct {
 	} `yaml:"template_args,omitempty"`
 }
 
+// Constructor
+func NewMaruConfig(name string, version string) *MaruConfig {
+	c := &MaruConfig{}
+	c.Name = name
+	c.Version = version
+	return c
+}
+
+// Returns the value of BuildArgs with the given key. Applies string interpolation to the value,
+// e.g. $version becomes the value of Version.
 func (c *MaruConfig) GetBuildArg(key string) string {
 	return strings.Replace(c.BuildArgs[key], "$version", c.Version, 1)
 }
 
+// Sets the given key/value pair in BuildArgs
 func (c *MaruConfig) SetBuildArg(key string, value string) {
 	if c.BuildArgs == nil {
 		c.BuildArgs = make(map[string]string)
@@ -65,26 +76,33 @@ func (c *MaruConfig) SetBuildArg(key string, value string) {
 	c.BuildArgs[key] = value
 }
 
+// Returns the value of GIT_TAG in BuildArgs, after applying string interpolation.
 func (c *MaruConfig) GetRepoTag() string {
 	return c.GetBuildArg("GIT_TAG")
 }
 
+// Returns the value of Version, after applying string interpolation,
+// e.g. $git_tag becomes the value of GIT_TAG in BuildArgs.
 func (c *MaruConfig) GetVersion() string {
 	return strings.Replace(c.Version, "$git_tag", c.BuildArgs["GIT_TAG"], 1)
 }
 
+// Returns the versioned name of the container, e.g. name:version
 func (c *MaruConfig) GetNameVersion() string {
 	return c.Name + ":" + c.GetVersion()
 }
 
+// Returns the name of the container tagged with latest, e.g. name:latest
 func (c *MaruConfig) GetNameLatest() string {
 	return c.Name + ":latest"
 }
 
+// Returns the namespaced tag for the given remote, e.g. remote/name:version
 func (c *MaruConfig) GetDockerTag(remote string) string {
 	return remote + "/" + c.GetNameVersion()
 }
 
+// Returns the command to use for building the code
 func (c *MaruConfig) GetBuildCommand() string {
 	if c.TemplateArgs.Build.Command == "" {
 		return "true"
@@ -92,23 +110,18 @@ func (c *MaruConfig) GetBuildCommand() string {
 	return c.TemplateArgs.Build.Command
 }
 
+// Returns true if the Remotes array is not empty
 func (c *MaruConfig) HasRemotes() bool {
 	return c.Remotes != nil && len(c.Remotes)>0
 }
 
+// Calculates a checksum for the current values stored in the TemplateArgs
 func (c *MaruConfig) GetTemplateArgsChecksum() string {
 	h := sha256.New()
 	s := fmt.Sprintf("%v", c.TemplateArgs)
 	h.Write([]byte(s))
 	sum := h.Sum(nil)
 	return fmt.Sprintf("%x", sum)
-}
-
-func NewMaruConfig(name string, version string) *MaruConfig {
-	c := &MaruConfig{}
-	c.Name = name
-	c.Version = version
-	return c
 }
 
 // Writes the given project configuration to the working directory
@@ -153,6 +166,8 @@ func ReadProjectConfig() *MaruConfig {
 	return c
 }
 
+// Reads the current project configuration from the working directory. Prints an errror message and quits
+// if no configuration exists in the working directory.
 func ReadMandatoryProjectConfig() *MaruConfig {
 	var config = ReadProjectConfig()
 	if config == nil {

@@ -153,6 +153,7 @@ func GetChecksumFromDockerfile() string {
 	return strings.TrimSpace(strings.Replace(first, "# ", "", 1))
 }
 
+// Tests the given checksum against the current checksum saved in the Dockerfile (if any)
 func TestChecksum(newChecksum string) bool {
 	existingChecksum := GetChecksumFromDockerfile()
 	return newChecksum == existingChecksum

@@ -50,6 +50,7 @@ func RunContainer(entrypoint []string, args []string) {
 
 	ctx := context.Background()
 
+	// Create the container using the current project context and user arguments
 	resp, err := cli.ContainerCreate(ctx, &container.Config{
 		Image:        versionTag,
 		Cmd:          args,
@@ -62,10 +63,12 @@ func RunContainer(entrypoint []string, args []string) {
 		Utils.PrintFatal("%s", err)
 	}
 
+	// Run the container
 	if err := cli.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
 		Utils.PrintFatal("%s", err)
 	}
 
+	// Monitor until the container is finished
 	statusCh, errCh := cli.ContainerWait(ctx, resp.ID, container.WaitConditionNotRunning)
 	select {
 	case err := <-errCh:
@@ -75,6 +78,7 @@ func RunContainer(entrypoint []string, args []string) {
 	case <-statusCh:
 	}
 
+	// Copy the container logs so that the user can view them
 	out, err := cli.ContainerLogs(ctx, resp.ID, types.ContainerLogsOptions{
 		ShowStdout: true,
 	})
