@@ -1,4 +1,4 @@
-maruversion: 0.1.0
+maru_version: 0.1.0
 name: bigstitcher
 version: 0.5.10
 remotes:
@@ -6,10 +6,11 @@ remotes:
 - registry.int.janelia.org/janeliascicomp
 build_args:
   GIT_TAG: BigStitcher-$version
-flavor: java_maven
-config:
+template_args:
+  flavor: java_maven
   build:
     repo_url: https://github.com/PreibischLab/BigStitcher.git
-    command: mvn -Pfatjar package
+    command: mvn -Pfatjar clean package
   java_maven:
+    jdk_version: "8"
     main_class: net.preibisch.mvrecon.fiji.plugin.resave.Resave_N5

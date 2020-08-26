@@ -20,6 +20,8 @@ TBD
 
 New releases are built and deployed to GitHub using GoReleaser. You first need to install GoReleaser and configure your GitHub token as per the [quickstart instructions](https://goreleaser.com/quick-start/). Then you can tag and release a new version as follows:
 
+1. Update the MaruVersion constant in utils/utils.go
+2. Tag and release:
 ```
 git tag -a 0.1.0 -m "Release 0.1.0"
 git push origin 0.1.0

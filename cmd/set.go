@@ -34,7 +34,7 @@ var setGitTagCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		varValue := args[0]
 		var config = Utils.ReadMandatoryProjectConfig()
-		config.BuildArgs["GIT_TAG"] = varValue
+		config.SetBuildArg("GIT_TAG", varValue)
 		Utils.WriteProjectConfig(config)
 		Utils.PrintSuccess("Updated git_tag to %s", varValue)
 	},

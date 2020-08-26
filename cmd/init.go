@@ -58,7 +58,8 @@ func Init() *Utils.MaruConfig {
 			if Utils.AskForBool("Create new Maru project using existing Dockerfile?", true) {
 				containerName := Utils.AskForString("Container name:", "")
 				containerVersion := Utils.AskForString("Container version:", "1.0.0")
-				config = Utils.NewMaruConfig("custom", containerName, containerVersion)
+				config = Utils.NewMaruConfig(containerName, containerVersion)
+				config.TemplateArgs.Flavor = "custom"
 				Utils.WriteProjectConfig(config)
 				printFinalInstructions(config)
 				os.Exit(0)
@@ -66,10 +67,10 @@ func Init() *Utils.MaruConfig {
 		}
 
 		isNewProject = true
-		config = Utils.NewMaruConfig("", "", "1.0.0")
-		config.Config.Build.RepoUrl = "https://github.com/example/repo.git"
-		config.BuildArgs["GIT_TAG"] = "$version"
-		config.Config.Build.Command = ""
+		config = Utils.NewMaruConfig("", "1.0.0")
+		config.TemplateArgs.Build.RepoUrl = "https://github.com/example/repo.git"
+		config.SetBuildArg("GIT_TAG", "$version")
+		config.TemplateArgs.Build.Command = ""
 	}
 
 	flavors := make([]string, 0, len(flavorMap))
@@ -78,14 +79,14 @@ func Init() *Utils.MaruConfig {
 	}
 	sort.Strings(flavors)
 
-	flavor := config.Flavor
+	flavor := config.TemplateArgs.Flavor
 	prompt := &survey.Select{
 		Message: "Flavor of container to build:",
 		Options: flavors,
 		Default: flavor,
 	}
 	Utils.Ask(prompt, &flavor)
-	config.Flavor = flavor
+	config.TemplateArgs.Flavor = flavor
 
 	// Validate flavor before going further
 	initFunction := flavorMap[flavor]
@@ -94,17 +95,18 @@ func Init() *Utils.MaruConfig {
 		os.Exit(1)
 	}
 
-	Utils.PrintInfo("\nWhich git repository should be built inside the container when ^maru build^ is called?")
-	config.Config.Build.RepoUrl = Utils.AskForString("Git URL:", config.Config.Build.RepoUrl)
+	Utils.PrintInfo("\nWhich code repository should be built when ^maru build^ is called?")
+	config.TemplateArgs.Build.RepoUrl = Utils.AskForString("Git URL:", config.TemplateArgs.Build.RepoUrl)
 
 	Utils.PrintInfo("\nWhich tag or branch should be built when ^maru build^ is called?")
 	Utils.PrintMessage(
-		`You can use ^master^ to build the master branch, but that's not recommended for creating reproducible containers.
-The best practice is to tag your git commit with a version number, and then use that same version as the container tag.
+		`You can use ^master^ here to build the master branch, but that's not recommended for creating reproducible containers.
+The best practice is to tag your code with a version number, and use that as the container tag. 
+You can use ^$version^ here to simplify that workflow.
 `)
-	config.BuildArgs["GIT_TAG"] = Utils.AskForString("Git tag:", config.BuildArgs["GIT_TAG"])
+	config.SetBuildArg("GIT_TAG", Utils.AskForString("Git tag:", config.BuildArgs["GIT_TAG"]))
 
-	u, err := url.Parse(config.Config.Build.RepoUrl)
+	u, err := url.Parse(config.TemplateArgs.Build.RepoUrl)
 	if err != nil {
 		Utils.PrintFatal("Problem parsing Git URL: %s",err)
 	}
@@ -128,18 +130,13 @@ The best practice is to tag your git commit with a version number, and then use 
 	}
 
 	Utils.PrintInfo("\nWhat is the name for this container?")
-	Utils.PrintMessage(
-		`The container name should only contain lowercase letters and underscores. 
-As an example, the container ^scientificlinux/sl:7^ is composed of the following elements:
-    remote/namespace:    scientificlinux
-    container name:      sl
-    container version:   7
+	Utils.PrintMessage(`The container name should only contain lowercase letters, numbers, dashes, and underscores.
 `)
 	config.Name = Utils.AskForString("Container name:", config.Name)
 
 	Utils.PrintInfo("\nWhat is the current version for this container?")
-	Utils.PrintMessage(`This will change over time, and can be easily updated with ^maru set version^.
-`)
+	Utils.PrintMessage(`This will change over time, and can easily be updated with ^maru set version^.
+If you used ^$version^ as you Git tag above, then this will also be the tag that is cloned from your git repository.`)
 	config.Version = Utils.AskForString("Container version:", config.Version)
 
 	// Invoke the init function for the chosen project flavor
@@ -148,35 +145,27 @@ As an example, the container ^scientificlinux/sl:7^ is composed of the following
 	Utils.WriteProjectConfig(config)
 	Utils.PrintSuccess("Created %s", Utils.ConfFile)
 
-	// Replace empty build with a no-op so that bash script still works
-	if config.Config.Build.Command=="" {
-		config.Config.Build.Command = "true"
-	}
-
-	// Set the checksum for printing into the template
-	config.ConfigChecksum = config.GetConfigChecksum()
-
 	generateDockerfile(config)
 	return config
 }
 
 func initProjectExecutable(config *Utils.MaruConfig, isNewProject bool) {
 
-	pc := &config.Config.Executable
+	pc := &config.TemplateArgs.Executable
 
 	if isNewProject {
 		// Default values
-		config.Config.Build.Command = "make"
+		config.TemplateArgs.Build.Command = "make"
 		pc.RelativeExePath = "bin/program"
 	}
 
-	config.Config.Build.Command = Utils.AskForString("Build command:", config.Config.Build.Command)
+	config.TemplateArgs.Build.Command = Utils.AskForString("Build command:", config.TemplateArgs.Build.Command)
 	pc.RelativeExePath = Utils.AskForString("Relative path to built executable:", pc.RelativeExePath)
 }
 
 func initProjectFiji(config *Utils.MaruConfig, isNewProject bool) {
 
-	pc := &config.Config.FijiMacro
+	pc := &config.TemplateArgs.FijiMacro
 
 	if isNewProject {
 		// Default values
@@ -192,7 +181,7 @@ func initProjectFiji(config *Utils.MaruConfig, isNewProject bool) {
 
 func initProjectPython(config *Utils.MaruConfig, isNewProject bool) {
 
-	pc := &config.Config.PythonConda
+	pc := &config.TemplateArgs.PythonConda
 
 	if isNewProject {
 		// Default values
@@ -221,15 +210,29 @@ func initProjectPython(config *Utils.MaruConfig, isNewProject bool) {
 
 func initProjectJavaMaven(config *Utils.MaruConfig, isNewProject bool) {
 
-	pc := &config.Config.JavaMaven
+	pc := &config.TemplateArgs.JavaMaven
 
 	if isNewProject {
 		// Default values
-		config.Config.Build.Command = "mvn package"
+		config.TemplateArgs.Build.Command = "mvn package"
 		pc.MainClass = "org.myapp.MyClass"
+		pc.JDKVersion = "8"
 	}
 
-	config.Config.Build.Command = Utils.AskForString("Build command:", config.Config.Build.Command)
+	Utils.PrintInfo("\nWhich version of the JDK should be used to build and run your code?")
+	Utils.PrintMessage(`This will use Azul's Zulu JDK distribution of OpenJDK.
+`)
+	prompt := &survey.Select{
+		Message: "JDK version:",
+		Options: []string{"6", "7", "8", "11", "13", "14"},
+		Default: pc.JDKVersion,
+	}
+	Utils.Ask(prompt, &pc.JDKVersion)
+
+	Utils.PrintInfo("\nWhich command should be run to build your code?")
+	Utils.PrintMessage(`This is typically a mvn build command, but you can chain other build steps using ^&&^.
+`)
+	config.TemplateArgs.Build.Command = Utils.AskForString("Build command:", config.TemplateArgs.Build.Command)
 	pc.MainClass = Utils.AskForString("Main class:", pc.MainClass)
 }
 
@@ -245,7 +248,7 @@ func generateDockerfile(config *Utils.MaruConfig) {
 		}
 	}
 
-	templateName := config.Flavor+".got"
+	templateName := config.TemplateArgs.Flavor+".got"
 
 	fs, err := gitfs.New(context.Background(), "github.com/JaneliaSciComp/maru/templates", gitfs.OptLocal(localDebug))
 	if err != nil {

@@ -12,15 +12,15 @@ const ConfFile = "maru.yaml"
 
 type MaruConfig struct {
 
-	ConfigChecksum string            `yaml:"-"`
-	MaruVersion    string
+	MaruVersion    string            `yaml:"maru_version"`
 	Name           string
 	Version        string
 	Remotes        []string          `yaml:"remotes,omitempty"`
 	BuildArgs      map[string]string `yaml:"build_args,omitempty"`
-	Flavor         string
 
-	Config struct {
+	TemplateArgs struct {
+		Flavor                 string
+
 		Build                  struct {
 			RepoUrl            string `yaml:"repo_url"`
 			Command            string `yaml:"command,omitempty"`
@@ -37,6 +37,7 @@ type MaruConfig struct {
 		} `yaml:"python_conda,omitempty"`
 
 		JavaMaven              struct {
+			JDKVersion         string `yaml:"jdk_version"`
 			MainClass          string `yaml:"main_class"`
 		} `yaml:"java_maven,omitempty"`
 
@@ -50,13 +51,18 @@ type MaruConfig struct {
 
 		} `yaml:"matlab_compiled,omitempty"`
 
-	} `yaml:"config,omitempty"`
+	} `yaml:"template_args,omitempty"`
 }
 
 func (c *MaruConfig) GetBuildArg(key string) string {
-	// TODO: this needs a more general solution to variable interpolation
-	s := strings.Replace(c.BuildArgs[key], "$version", c.Version, 1)
-	return strings.Replace(s, "$git_tag", c.BuildArgs["GIT_TAG"], 1)
+	return strings.Replace(c.BuildArgs[key], "$version", c.Version, 1)
+}
+
+func (c *MaruConfig) SetBuildArg(key string, value string) {
+	if c.BuildArgs == nil {
+		c.BuildArgs = make(map[string]string)
+	}
+	c.BuildArgs[key] = value
 }
 
 func (c *MaruConfig) GetRepoTag() string {
@@ -79,22 +85,28 @@ func (c *MaruConfig) GetDockerTag(remote string) string {
 	return remote + "/" + c.GetNameVersion()
 }
 
+func (c *MaruConfig) GetBuildCommand() string {
+	if c.TemplateArgs.Build.Command == "" {
+		return "true"
+	}
+	return c.TemplateArgs.Build.Command
+}
+
 func (c *MaruConfig) HasRemotes() bool {
 	return c.Remotes != nil && len(c.Remotes)>0
 }
 
-func (c *MaruConfig) GetConfigChecksum() string {
+func (c *MaruConfig) GetTemplateArgsChecksum() string {
 	h := sha256.New()
-	s := fmt.Sprintf("%v", c.Config)
+	s := fmt.Sprintf("%v", c.TemplateArgs)
 	h.Write([]byte(s))
 	sum := h.Sum(nil)
 	return fmt.Sprintf("%x", sum)
 }
 
-func NewMaruConfig(flavor string, name string, version string) *MaruConfig {
+func NewMaruConfig(name string, version string) *MaruConfig {
 	c := &MaruConfig{}
 	c.Name = name
-	c.Flavor = flavor
 	c.Version = version
 	return c
 }

@@ -18,8 +18,8 @@ import (
 
 var buildCmd = &cobra.Command{
 	Use:   "build",
-	Short: "Build a container for the current project",
-	Long: `Runs a docker build for the current Maru project. The current directory must contain a maru.yaml 
+	Short: "Build container image for the current project",
+	Long: `Runs a Docker build for the current Maru project. The current directory must contain a maru.yaml 
 file describing the project. You can initialize a project using the init command.
 `,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -36,7 +36,7 @@ func runBuild() {
 	config := Utils.ReadMandatoryProjectConfig()
 	versionTag := config.GetNameVersion()
 
-	checksum := config.GetConfigChecksum()
+	checksum := config.GetTemplateArgsChecksum()
 	if !Utils.TestChecksum(checksum) {
 		Utils.PrintDebug("Checksum does not match: %s", checksum)
 		if Utils.AskForBool("The project configuration has changed. Do you want to regenerate the Dockerfile?", true) {
@@ -48,7 +48,7 @@ func runBuild() {
 	}
 
 	Utils.PrintInfo("Building %s from %s @ %s", versionTag,
-		config.GetRepoTag(), config.Config.Build.RepoUrl)
+		config.GetRepoTag(), config.TemplateArgs.Build.RepoUrl)
 
 	// To get the Docker client working, I had to `go get github.com/docker/docker@master`
 	// as per https://github.com/moby/moby/issues/40185

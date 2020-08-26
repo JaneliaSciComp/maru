@@ -13,7 +13,7 @@ var statusCmd = &cobra.Command{
 
 		var config = Utils.ReadMandatoryProjectConfig()
 		Utils.PrintInfo("%s %s", config.Name, config.Version)
-		Utils.PrintMessage("flavor: %s", config.Flavor)
+		Utils.PrintMessage("flavor: %s", config.TemplateArgs.Flavor)
 		Utils.PrintMessage("local tags:")
 		Utils.PrintMessage("- %s", config.GetNameLatest())
 		Utils.PrintMessage("- %s", config.GetNameVersion())

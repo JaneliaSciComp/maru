@@ -1,13 +1,12 @@
-maruversion: 0.1.0
+maru_version: 0.1.0
 name: h5jmetadata
 version: 1.0.0
-namespaces:
-- registry.int.janelia.org/jacs-tools
-flavor: python_conda
-config:
+build_args:
+  GIT_TAG: master
+template_args:
+  flavor: python_conda
   build:
     repo_url: https://github.com/JaneliaSciComp/jacs-tools-docker.git
-    repo_tag: master
   python_conda:
     python_version: "3.6"
     dependencies: h5py=2.8.0 PyYAML=3.13
