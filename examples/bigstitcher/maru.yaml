@@ -1,6 +1,6 @@
 maru_version: 0.1.0
 name: bigstitcher
-version: 0.5.10
+version: 0.5.11
 remotes:
 - janeliascicomp
 - registry.int.janelia.org/janeliascicomp
