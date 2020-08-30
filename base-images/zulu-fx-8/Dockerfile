@@ -3,10 +3,6 @@ FROM ubuntu:18.04
 # eliminate input warnings from debconf
 ARG DEBIAN_FRONTEND=noninteractive
 
-#ENV LANG en_US.UTF-8
-#ENV LANGUAGE en_US:en
-#ENV LC_ALL en_US.UTF-8
-
 # set DISPLAY to host.docker.internal:0 for running in Docker for Mac
 ENV DISPLAY=:0 
 # set timezone for GTK

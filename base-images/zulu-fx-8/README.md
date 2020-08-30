@@ -1,6 +1,6 @@
 # zulu-fx-8 Docker image
 
-This image bundles [Zulu's "JDK FX" build](https://www.azul.com/downloads/zulu-community/?version=java-8-lts&os=ubuntu&architecture=x86-64-bit&package=jdk-fx) which includes OpenJDK and OpenJFX. JavaFX programs can be run inside the container and displayed in X11. This base image can be used to create Docker containers for JavaFX apps.
+This image bundles the [ZuluFX build](https://www.azul.com/downloads/zulu-community/?version=java-8-lts&os=ubuntu&architecture=x86-64-bit&package=jdk-fx) which includes OpenJDK and OpenJFX. JavaFX programs can be run inside the container and displayed in X11. This base image can be used to create Docker containers for JavaFX apps.
 
 ## Linux Docker
 
