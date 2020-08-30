@@ -15,8 +15,10 @@
 #   (D) Unless, the command starts with an executable, in which case run it:
 #   $ docker run fiji ImageJ-linux64 --console --run /my/script.py
 
+PREFDIR=${PREFDIR:-"/opt/fiji"}
+
 # Command run by default
-IMAGEJ=${IMAGEJ:-"ImageJ-linux64 --headless --default-gc"}
+IMAGEJ=${IMAGEJ:-"ImageJ-linux64 -Djava.util.prefs.userRoot=$PREFDIR -- --headless --default-gc"}
 
 # For debugging purposes
 RUN=${RUN:-exec}

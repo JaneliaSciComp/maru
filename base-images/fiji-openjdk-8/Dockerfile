@@ -23,3 +23,7 @@ ENV PATH $PATH:/opt/fiji/Fiji.app
 COPY entrypoint.sh /opt/fiji
 ENTRYPOINT ["/opt/fiji/entrypoint.sh"]
 
+# Run once to create Java preferences.
+COPY demo.py /opt/fiji/
+RUN /opt/fiji/entrypoint.sh --headless --ij2 --console --run /opt/fiji/demo.py 'name="test"'
+
