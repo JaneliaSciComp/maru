@@ -8,16 +8,13 @@ ARG GIT_TAG=master
 # Checkout and build the code
 WORKDIR /tmp/app
 RUN git clone --branch $GIT_TAG --depth 1 https://github.com/JaneliaSciComp/jacs-tools-docker.git . \
-    && /usr/local/bin/buildinfo.sh \
-    && true
+    && /usr/local/bin/buildinfo.sh 
 
 # Create final image
 FROM janeliascicomp/fiji:fiji-openjdk-8
 
-
 COPY --from=builder /tmp/app/fiji_convert/fiji_plugins /opt/fiji/Fiji.app/plugins
 COPY --from=builder /tmp/app/fiji_convert/fiji_macros /opt/fiji/Fiji.app/macros
-
 COPY --from=builder /buildinfo /
 
 ENTRYPOINT [ "/opt/fiji/entrypoint.sh", "-macro", "convert_stack.ijm" ]
