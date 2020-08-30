@@ -45,6 +45,7 @@ func Init() *Utils.MaruConfig {
 		"executable":      initProjectExecutable,
 		"python_conda":    initProjectPython,
 		"java_maven":      initProjectJavaMaven,
+		"javafx_maven":    initProjectJavaFxMaven,
 		"fiji_macro":      initProjectFiji,
 		"matlab_compiled": initProjectMatlab,
 	}
@@ -55,15 +56,7 @@ func Init() *Utils.MaruConfig {
 	if config == nil {
 
 		if Utils.FileExists(Utils.DockerFilePath) {
-			if Utils.AskForBool("Create new Maru project using existing Dockerfile?", true) {
-				containerName := Utils.AskForString("Container name:", "")
-				containerVersion := Utils.AskForString("Container version:", "1.0.0")
-				config = Utils.NewMaruConfig(containerName, containerVersion)
-				config.TemplateArgs.Flavor = "custom"
-				Utils.WriteProjectConfig(config)
-				printFinalInstructions(config)
-				os.Exit(0)
-			}
+			checkIfUserWantsToUseDockerfile()
 		}
 
 		isNewProject = true
@@ -71,6 +64,16 @@ func Init() *Utils.MaruConfig {
 		config.TemplateArgs.Build.RepoUrl = "https://github.com/example/repo.git"
 		config.SetBuildArg("GIT_TAG", "$version")
 		config.TemplateArgs.Build.Command = ""
+
+	} else {
+
+		if config.TemplateArgs.Flavor == "" {
+			if !Utils.AskForBool("This directory is already initialized with custom project '"+config.Name+"'. Reinitialize?", false) {
+				os.Exit(0)
+			}
+			checkIfUserWantsToUseDockerfile()
+		}
+
 	}
 
 	flavors := make([]string, 0, len(flavorMap))
@@ -80,6 +83,9 @@ func Init() *Utils.MaruConfig {
 	sort.Strings(flavors)
 
 	flavor := config.TemplateArgs.Flavor
+	if flavor == "" {
+		flavor = flavors[0]
+	}
 	prompt := &survey.Select{
 		Message: "Flavor of container to build:",
 		Options: flavors,
@@ -147,6 +153,17 @@ If you used ^$version^ as you Git tag above, then this will also be the tag that
 
 	generateDockerfile(config)
 	return config
+}
+
+func checkIfUserWantsToUseDockerfile() {
+	if Utils.AskForBool("Create new Maru project using existing Dockerfile?", true) {
+		containerName := Utils.AskForString("Container name:", "")
+		containerVersion := Utils.AskForString("Container version:", "1.0.0")
+		config := Utils.NewMaruConfig(containerName, containerVersion)
+		Utils.WriteProjectConfig(config)
+		printFinalInstructions(config)
+		os.Exit(0)
+	}
 }
 
 func initProjectExecutable(config *Utils.MaruConfig, isNewProject bool) {
@@ -234,6 +251,24 @@ func initProjectJavaMaven(config *Utils.MaruConfig, isNewProject bool) {
 `)
 	config.TemplateArgs.Build.Command = Utils.AskForString("Build command:", config.TemplateArgs.Build.Command)
 	pc.MainClass = Utils.AskForString("Main class:", pc.MainClass)
+}
+
+func initProjectJavaFxMaven(config *Utils.MaruConfig, isNewProject bool) {
+
+	pc := &config.TemplateArgs.JavaMaven
+
+	if isNewProject {
+		// Default values
+		config.TemplateArgs.Build.Command = "mvn package"
+		pc.MainClass = "org.myapp.MyClass"
+		pc.JDKVersion = "8"
+	}
+
+	Utils.PrintInfo("\nWhich command should be run to build your code?")
+	Utils.PrintMessage(`This is typically a mvn build command, but you can chain other build steps using ^&&^.
+`)
+	config.TemplateArgs.Build.Command = Utils.AskForString("Build command:", config.TemplateArgs.Build.Command)
+	pc.MainClass = Utils.AskForString("Main FX class:", pc.MainClass)
 }
 
 func initProjectMatlab(config *Utils.MaruConfig, isNewProject bool) {

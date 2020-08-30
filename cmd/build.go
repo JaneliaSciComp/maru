@@ -2,15 +2,14 @@ package cmd
 
 import (
 	"context"
-	"io/ioutil"
-	"log"
-	Utils "maru/utils"
-	"os"
-
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/jhoonb/archivex"
 	"github.com/moby/term"
 	"github.com/spf13/cobra"
+	"io/ioutil"
+	"log"
+	Utils "maru/utils"
+	"os"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
@@ -36,19 +35,27 @@ func runBuild() {
 	config := Utils.ReadMandatoryProjectConfig()
 	versionTag := config.GetNameVersion()
 
-	checksum := config.GetTemplateArgsChecksum()
-	if !Utils.TestChecksum(checksum) {
-		Utils.PrintDebug("Checksum does not match: %s", checksum)
-		if Utils.AskForBool("The project configuration has changed. Do you want to regenerate the Dockerfile?", true) {
-			Init()
-			if !Utils.AskForBool("Proceed with container build?", true) {
-				os.Exit(0)
+	if config.TemplateArgs.Flavor != "" {
+		checksum := config.GetTemplateArgsChecksum()
+		if !Utils.TestChecksum(checksum) {
+			Utils.PrintDebug("Checksum does not match: %s", checksum)
+			if Utils.AskForBool("The project configuration has changed. Do you want to regenerate the Dockerfile?", true) {
+				Init()
+				if !Utils.AskForBool("Proceed with container build?", true) {
+					os.Exit(0)
+				}
 			}
 		}
 	}
 
-	Utils.PrintInfo("Building %s from %s @ %s", versionTag,
-		config.GetRepoTag(), config.TemplateArgs.Build.RepoUrl)
+	if config.TemplateArgs.Build.RepoUrl == "" {
+		Utils.PrintInfo("Building %s", versionTag)
+	} else {
+		Utils.PrintInfo("Building %s from %s @ %s", versionTag,
+			config.GetRepoTag(), config.TemplateArgs.Build.RepoUrl)
+	}
+
+	Utils.PrintHint("%% docker build . -t %s -t %s", config.GetNameLatest(), versionTag)
 
 	// To get the Docker client working, I had to `go get github.com/docker/docker@master`
 	// as per https://github.com/moby/moby/issues/40185

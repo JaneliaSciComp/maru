@@ -39,7 +39,7 @@ func RunContainer(entrypoint []string, args []string) {
 	versionTag := config.GetNameVersion()
 	Utils.PrintInfo("Running %s", versionTag)
 
-	Utils.PrintHint("%% docker run %s-t %s %s",
+	Utils.PrintHint("%% docker run %s%s %s",
 		GetEnvVariableString(), versionTag, strings.Join(args, " "))
 
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
