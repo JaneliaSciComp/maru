@@ -15,7 +15,7 @@ RUN xq -r '.project.artifactId+"-"+.project.version+".jar"' pom.xml > filename \
     && mv /tmp/app/target/`cat filename` app.jar
 
 # Create final image
-FROM janeliascicomp/zulu-fx-:{{ .TemplateArgs.JavaMaven.JDKVersion }}
+FROM janeliascicomp/zulu-fx:{{ .TemplateArgs.JavaMaven.JDKVersion }}
 
 COPY --from=builder /tmp/app/app.jar /app/app.jar
 COPY --from=builder /buildinfo /

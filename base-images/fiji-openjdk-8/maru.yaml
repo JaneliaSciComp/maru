@@ -3,5 +3,3 @@ name: fiji
 version: fiji-openjdk-8
 remotes:
 - janeliascicomp
-template_args:
-  flavor: custom

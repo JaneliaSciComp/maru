@@ -7,10 +7,10 @@ remotes:
 build_args:
   GIT_TAG: BigStitcher-$version
 template_args:
-  flavor: java_maven
+  flavor: javafx_maven
   build:
     repo_url: https://github.com/PreibischLab/BigStitcher.git
     command: mvn -Pfatjar package
   java_maven:
     jdk_version: "8"
-    main_class: net.preibisch.mvrecon.fiji.plugin.resave.Resave_N5
+    main_class: net.preibisch.stitcher.plugin.BigStitcher

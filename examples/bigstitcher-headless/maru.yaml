@@ -1,5 +1,5 @@
 maru_version: 0.1.0
-name: bigstitcher
+name: bigstitcher-headless
 version: 0.5.11
 remotes:
 - janeliascicomp
