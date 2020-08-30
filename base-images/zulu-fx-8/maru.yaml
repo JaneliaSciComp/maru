@@ -1,0 +1,5 @@
+maru_version: 0.1.0
+name: zulu-fx
+version: "8"
+remotes:
+- janeliascicomp
