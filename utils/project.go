@@ -102,12 +102,12 @@ func (c *MaruConfig) GetDockerTag(remote string) string {
 	return remote + "/" + c.GetNameVersion()
 }
 
-// Returns the command to use for building the code
+// Returns the command to use for building the code, prepended with line continuation
 func (c *MaruConfig) GetBuildCommand() string {
 	if c.TemplateArgs.Build.Command == "" {
-		return "true"
+		return ""
 	}
-	return c.TemplateArgs.Build.Command
+	return "\\\n    && "+c.TemplateArgs.Build.Command
 }
 
 // Returns true if the Remotes array is not empty

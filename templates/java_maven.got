@@ -8,10 +8,9 @@ ARG GIT_TAG=master
 # Checkout and build the code
 WORKDIR /tmp/app
 RUN git clone --branch $GIT_TAG --depth 1 {{ .TemplateArgs.Build.RepoUrl }} . \
-    && /usr/local/bin/buildinfo.sh \
-    && {{ .GetBuildCommand }}
+    && /usr/local/bin/buildinfo.sh {{ .GetBuildCommand }}
 
-# Find the built jar, based on the versio:wqn in the pom file
+# Find the built jar, based on the version in the pom file
 RUN xq -r '.project.artifactId+"-"+.project.version+".jar"' pom.xml > filename \
     && mv /tmp/app/target/`cat filename` app.jar
 
