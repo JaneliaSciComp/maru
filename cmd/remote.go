@@ -22,7 +22,7 @@ var remoteCmd = &cobra.Command{
 		} else {
 			Utils.PrintMessage("There are no remote repositories configured for the current project.")
 		}
-		Utils.PrintInfo("\nUse `maru remote add` to add a new remote, and `maru remote rm` to delete one.")
+		Utils.PrintInfo("\nUse `maru remote add` to add a new remote.")
 
 	},
 }
