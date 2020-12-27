@@ -1,5 +1,7 @@
 maru_version: 0.1.0
 name: fiji
-version: fiji-openjdk-8
+version: 20201104-1356
+build_args:
+  FIJI_VERSION: $version
 remotes:
 - janeliascicomp
