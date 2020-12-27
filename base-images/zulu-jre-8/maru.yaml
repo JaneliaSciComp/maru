@@ -1,0 +1,5 @@
+maru_version: 0.1.0
+name: zulu-jre
+version: "8u275b01"
+remotes:
+- janeliascicomp
