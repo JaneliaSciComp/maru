@@ -1,15 +1,16 @@
 package cmd
 
 import (
-	"github.com/spf13/cobra"
 	Utils "maru/utils"
+
+	"github.com/spf13/cobra"
 )
 
 var pushCmd = &cobra.Command{
 	Use:   "push",
 	Short: "Push the container to all its configured remotes",
-	Long: `Deploys the container to all of its configured remotes. The container must be already built using the build command. Use remote command to list remotes or add a new one.`,
-	Args: cobra.ExactArgs(0),
+	Long:  `Deploys the container to all of its configured remotes. The container must be already built using the build command. Use remote command to list remotes or add a new one.`,
+	Args:  cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
 
 		config := Utils.ReadMandatoryProjectConfig()

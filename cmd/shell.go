@@ -1,22 +1,16 @@
 package cmd
 
 import (
-	"context"
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/client"
-	"github.com/spf13/cobra"
-	"golang.org/x/crypto/ssh/terminal"
-	"io"
 	Utils "maru/utils"
-	"os"
 	"strings"
+
+	"github.com/spf13/cobra"
 )
 
 var shellCmd = &cobra.Command{
 	Use:   "shell",
 	Short: "Starts a Bash shell into the current container",
-	Long: `Starts a Bash shell into the current container. Mainly used for debugging.`,
+	Long:  `Starts a Bash shell into the current container. Mainly used for debugging.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		RunInteractive([]string{"/bin/bash"}, nil)
 	},
@@ -34,70 +28,94 @@ func RunInteractive(entrypoint []string, args []string) {
 	versionTag := config.GetNameVersion()
 	Utils.PrintInfo("Creating interactive shell for %s", versionTag)
 
-	Utils.PrintHint("%% docker run -it %s--entrypoint=/bin/bash %s %s",
-		GetEnvVariableString(), versionTag, strings.Join(args, " "))
+	cmdArgs := make([]string, 5+2*len(EnvParam))
 
-	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
-	if err != nil {
-		Utils.PrintFatal("%s", err)
-	}
-	defer cli.Close()
+	cmdArgs[0] = "run"
+	cmdArgs[1] = "-it"
 
-	ctx := context.Background()
-	resp, err := cli.ContainerCreate(ctx, &container.Config{
-		Image:        versionTag,
-		Cmd:          args,
-		Tty:          true,
-		OpenStdin:    true,
-		AttachStdin:  true,
-		AttachStdout: true,
-		StdinOnce:    true,
-		Entrypoint:   entrypoint,
-		Env:          EnvParam,
-		User:         UserParam,
-	}, nil, nil, nil, "")
-	if err != nil {
-		Utils.PrintFatal("%s", err)
-	}
-
-	// It's important to attach before starting, otherwise we'll miss the first prompt
-	waiter, err := cli.ContainerAttach(ctx, resp.ID, types.ContainerAttachOptions{
-		Stdout:       true,
-		Stdin:        true,
-		Stream:       true,
-	})
-	if err != nil {
-		Utils.PrintFatal("%s", err)
-	}
-
-	// Set up IO pipes to run in the background
-	go io.Copy(os.Stdout, waiter.Reader)
-	go io.Copy(os.Stderr, waiter.Reader)
-	go io.Copy(waiter.Conn, os.Stdin)
-
-	// Ensure the terminal is raw
-	fd := int(os.Stdin.Fd())
-	var oldState *terminal.State
-	if terminal.IsTerminal(fd) {
-		oldState, err = terminal.MakeRaw(fd)
-		if err != nil {
-			Utils.PrintError("%s", err)
+	i := 2
+	if EnvParam != nil {
+		for i, v := range EnvParam {
+			cmdArgs[i] = "-e"
+			cmdArgs[i+1] = v
+			i += 2
 		}
-		defer terminal.Restore(fd, oldState)
 	}
 
-	// Start the container process
-	if err := cli.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
-		Utils.PrintFatal("%s", err)
+	cmdArgs[i] = "--entrypoint"
+	cmdArgs[i+1] = "/bin/bash"
+	cmdArgs[i+2] = versionTag
+
+	Utils.PrintHint("%% docker %s", strings.Join(cmdArgs, " "))
+
+	err := Utils.RunCommand("docker", cmdArgs...)
+	if err != nil {
+		Utils.PrintError("Command `docker run` exited with %s", err)
 	}
 
-	// Wait until the container is done
-	statusCh, errCh := cli.ContainerWait(ctx, resp.ID, container.WaitConditionNotRunning)
-	select {
-	case err := <-errCh:
+	/*
+		cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 		if err != nil {
 			Utils.PrintFatal("%s", err)
 		}
-	case <-statusCh:
-	}
+		defer cli.Close()
+
+		ctx := context.Background()
+		resp, err := cli.ContainerCreate(ctx, &container.Config{
+			Image:        versionTag,
+			Cmd:          args,
+			Tty:          true,
+			OpenStdin:    true,
+			AttachStdin:  true,
+			AttachStdout: true,
+			StdinOnce:    true,
+			Entrypoint:   entrypoint,
+			Env:          EnvParam,
+			User:         UserParam,
+		}, nil, nil, nil, "")
+		if err != nil {
+			Utils.PrintFatal("%s", err)
+		}
+
+		// It's important to attach before starting, otherwise we'll miss the first prompt
+		waiter, err := cli.ContainerAttach(ctx, resp.ID, types.ContainerAttachOptions{
+			Stdout:       true,
+			Stdin:        true,
+			Stream:       true,
+		})
+		if err != nil {
+			Utils.PrintFatal("%s", err)
+		}
+
+		// Set up IO pipes to run in the background
+		go io.Copy(os.Stdout, waiter.Reader)
+		go io.Copy(os.Stderr, waiter.Reader)
+		go io.Copy(waiter.Conn, os.Stdin)
+
+		// Ensure the terminal is raw
+		fd := int(os.Stdin.Fd())
+		var oldState *terminal.State
+		if terminal.IsTerminal(fd) {
+			oldState, err = terminal.MakeRaw(fd)
+			if err != nil {
+				Utils.PrintError("%s", err)
+			}
+			defer terminal.Restore(fd, oldState)
+		}
+
+		// Start the container process
+		if err := cli.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
+			Utils.PrintFatal("%s", err)
+		}
+
+		// Wait until the container is done
+		statusCh, errCh := cli.ContainerWait(ctx, resp.ID, container.WaitConditionNotRunning)
+		select {
+		case err := <-errCh:
+			if err != nil {
+				Utils.PrintFatal("%s", err)
+			}
+		case <-statusCh:
+		}
+	*/
 }

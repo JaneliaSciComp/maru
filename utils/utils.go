@@ -3,16 +3,17 @@ package utils
 import (
 	"bufio"
 	"fmt"
-	"github.com/AlecAivazis/survey/v2"
-	"github.com/AlecAivazis/survey/v2/terminal"
 	"os"
 	"os/exec"
 	"strings"
 
+	"github.com/AlecAivazis/survey/v2"
+	"github.com/AlecAivazis/survey/v2/terminal"
+
 	Aurora "github.com/logrusorgru/aurora"
 )
 
-const MaruVersion = "0.1.0"
+const MaruVersion = "0.1.1"
 const DockerFilePath = "Dockerfile"
 
 var Debug = false
@@ -65,7 +66,7 @@ func print(colorFunc ColorFunc, format string, a ...interface{}) {
 	parts := strings.Split(fixedString, "^")
 
 	for i, part := range parts {
-		if i % 2 == 0 {
+		if i%2 == 0 {
 			if colorFunc != nil {
 				// Use the color function if available
 				fmt.Print(colorFunc(part))
@@ -94,6 +95,8 @@ func FileExists(filename string) bool {
 // RunCommand - runs the given command synchronously and prints any output to STDOUT/STDERR
 func RunCommand(name string, arg ...string) error {
 	cmd := exec.Command(name, arg...)
+	cmd.Env = os.Environ()
+	cmd.Env = append(cmd.Env, "DOCKER_BUILDKIT=1")
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
