@@ -8,6 +8,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var buildArgs []string
+
 var buildCmd = &cobra.Command{
 	Use:   "build",
 	Short: "Build container image for the current project",
@@ -20,6 +22,7 @@ file describing the project. You can initialize a project using the init command
 }
 
 func init() {
+	buildCmd.Flags().StringArrayVar(&buildArgs, "build-arg", nil, "Set build-time arguments for the container, e.g. when using run or shell")
 	rootCmd.AddCommand(buildCmd)
 }
 
@@ -51,23 +54,36 @@ func runBuild() {
 	Utils.PrintMessage("Building image...")
 
 	// Interpolate map values to string pointers
-	args := make([]string, 6+2*len(config.BuildArgs))
+	args := make([]string, 1)
 
 	args[0] = "build"
-
 	i := 1
-	for key := range config.BuildArgs {
-		args[i] = "--build-arg"
-		args[i+1] = key + "=" + config.GetBuildArg(key)
+
+	// Process command line build args first
+	set := make(map[string]bool)
+	for _, buildArg := range buildArgs {
+		s := strings.Split(buildArg, "=")
+		set[s[0]] = true
+		args = append(args, "--build-arg")
+		args = append(args, buildArg)
 		i += 2
 	}
 
-	args[i] = "-t"
-	args[i+1] = config.Name + ":latest"
-	args[i+2] = "-t"
-	args[i+3] = versionTag
-	args[i+4] = "."
+	// Add any build args from the config file which were not overridden on the command line
+	for key := range config.BuildArgs {
+		if !set[key] {
+			args = append(args, "--build-arg")
+			args = append(args, key+"="+config.GetBuildArg(key))
+		}
+	}
 
+	args = append(args, "-t")
+	args = append(args, config.Name+":latest")
+	args = append(args, "-t")
+	args = append(args, versionTag)
+	args = append(args, ".")
+
+	Utils.PrintHint("%% docker %#v", args)
 	Utils.PrintHint("%% docker %s", strings.Join(args, " "))
 
 	err := Utils.RunCommand("docker", args...)

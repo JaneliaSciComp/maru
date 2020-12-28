@@ -1,10 +1,11 @@
 package cmd
 
 import (
+	Utils "maru/utils"
+
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	Utils "maru/utils"
 )
 
 var cfgFile string
@@ -13,9 +14,9 @@ var UserParam string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "maru",
-	Short: "Maru makes scientific containers fun and easy.",
-	Long: `Maru is a CLI utility for containerizing scientific applications and managing those containers.`,
+	Use:              "maru",
+	Short:            "Maru makes scientific containers fun and easy.",
+	Long:             `Maru is a CLI utility for containerizing scientific applications and managing those containers.`,
 	TraverseChildren: true,
 }
 
@@ -35,8 +36,8 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&Utils.Debug, "debug", "d", false, "print debug output")
 
 	// Docker parameters
-	rootCmd.PersistentFlags().StringArrayVarP(&EnvParam,"env", "e", nil, "Set environment variables for the running container, e.g. when using run or shell")
-	rootCmd.PersistentFlags().StringVarP(&UserParam,"user", "u", "", "Set user for the running container, e.g. when using run or shell")
+	rootCmd.PersistentFlags().StringArrayVarP(&EnvParam, "env", "e", nil, "Set environment variables for the running container, e.g. when using run or shell")
+	rootCmd.PersistentFlags().StringVarP(&UserParam, "user", "u", "", "Set user for the running container, e.g. when using run or shell")
 }
 
 // initConfig reads in config file and ENV variables if set.
