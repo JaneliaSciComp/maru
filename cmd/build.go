@@ -83,7 +83,6 @@ func runBuild() {
 	args = append(args, versionTag)
 	args = append(args, ".")
 
-	Utils.PrintHint("%% docker %#v", args)
 	Utils.PrintHint("%% docker %s", strings.Join(args, " "))
 
 	err := Utils.RunCommand("docker", args...)
