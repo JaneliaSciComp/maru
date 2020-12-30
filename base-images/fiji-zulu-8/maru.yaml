@@ -1,6 +1,6 @@
 maru_version: 0.1.0
 name: fiji-zulu-8
-version: 20201104-1356
+version: 20201021-2016
 build_args:
   FIJI_VERSION: $version
 remotes:

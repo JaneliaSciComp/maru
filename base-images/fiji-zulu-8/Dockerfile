@@ -2,7 +2,7 @@
 # Fiji + Zulu Java 8 Dockerfile
 #
 FROM janeliascicomp/common-tools:1.0.2 as fiji-builder
-ARG FIJI_VERSION=20201104-1356
+ARG FIJI_VERSION
 WORKDIR /app/fiji
 RUN curl -sL https://downloads.imagej.net/fiji/archive/$FIJI_VERSION/fiji-nojre.tar.gz | tar -xz -C /app/fiji
 RUN chmod +x /app/fiji/Fiji.app/ImageJ-linux64 \
