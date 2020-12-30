@@ -1,22 +1,23 @@
 package cmd
 
 import (
-	"github.com/spf13/cobra"
 	Utils "maru/utils"
 	"os/exec"
+
+	"github.com/spf13/cobra"
 )
 
 var singularityCmd = &cobra.Command{
 	Use:   "singularity",
 	Short: "Run containers using Singularity",
-	Long: "Run containers using Singularity. This is used mainly for running on HPC clusters.",
+	Long:  "Run containers using Singularity. This is used mainly for running on HPC clusters.",
 }
 
 var singularityBuildCmd = &cobra.Command{
 	Use:   "build [output image file]",
 	Short: "Builds a Singularity container from the existing Docker container",
-	Long: "Builds a Singularity container (in Singularity Image Format) from the built Docker container.\n"+
-	"This assumes that `maru build` was already run successfully and the Docker container exists on disk.",
+	Long: "Builds a Singularity container (in Singularity Image Format) from the built Docker container.\n" +
+		"This assumes that `maru build` was already run successfully and the Docker container exists on disk.",
 	Args: cobra.RangeArgs(0, 1),
 	Run: func(cmd *cobra.Command, args []string) {
 
@@ -28,11 +29,12 @@ var singularityBuildCmd = &cobra.Command{
 		imageName := config.GetNameVersion()
 
 		// Default to temp directory
-		outFile := "/tmp/"+config.Name+"_"+config.Version+".sif"
+		outFile := "/tmp/" + config.Name + "_" + config.Version + ".sif"
 		if len(args) > 0 {
 			outFile = args[0]
 		}
 
+		Utils.PrintInfo("Converting %s to Singularity Image Format (SIF)", imageName)
 		Utils.PrintHint("%% singularity build %s docker-daemon://%s", outFile, imageName)
 		err := Utils.RunCommand("singularity", "build", outFile, "docker-daemon://"+imageName)
 		if err != nil {
@@ -47,10 +49,10 @@ var singularityBuildCmd = &cobra.Command{
 var singularityRunCmd = &cobra.Command{
 	Use:   "run [args]",
 	Short: "Runs the current Maru project using Singularity",
-	Long: "Runs the current Maru project using Singularity, passing any arguments to the container's entrypoint.\n"+
-	"This first runs an implicit command equivalent to `maru singularity build` in order to to convert the container \n" +
-	"to Singularity Image Format. Environment variables may be passed using the -e flag, but the user flag -u will \n" +
-	"have no affect because Singularity always runs as the current user.",
+	Long: "Runs the current Maru project using Singularity, passing any arguments to the container's entrypoint.\n" +
+		"This first runs an implicit command equivalent to `maru singularity build` in order to to convert the container \n" +
+		"to Singularity Image Format. Environment variables may be passed using the -e flag, but the user flag -u will \n" +
+		"have no affect because Singularity always runs as the current user.",
 	Run: func(cmd *cobra.Command, args []string) {
 
 		if !isCommandAvailable("singularity") {
@@ -58,8 +60,10 @@ var singularityRunCmd = &cobra.Command{
 		}
 
 		var config = Utils.ReadMandatoryProjectConfig()
-		Utils.PrintInfo("Running %s", config.GetNameVersion())
 		imageName := config.GetNameVersion()
+		Utils.PrintInfo("Running %s using Singularity", imageName)
+		Utils.PrintInfo("WARNING: This command implicitly converts the container to SIF format each time, which is a time-consuming operation. " +
+			"For repeatable use, use `maru singularity build` to create a SIF file on disk.")
 
 		// The usual slashes after docker-daemon are not accepted here
 		// https://github.com/hpcng/singularity/issues/4734
