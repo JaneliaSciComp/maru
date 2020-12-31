@@ -35,8 +35,8 @@ var singularityBuildCmd = &cobra.Command{
 		}
 
 		Utils.PrintInfo("Converting %s to Singularity Image Format (SIF)", imageName)
-		Utils.PrintHint("%% singularity build %s docker-daemon://%s", outFile, imageName)
-		err := Utils.RunCommand("singularity", "build", outFile, "docker-daemon://"+imageName)
+		Utils.PrintHint("%% singularity build -F %s docker-daemon://%s", outFile, imageName)
+		err := Utils.RunCommand("singularity", "build", "-F", outFile, "docker-daemon://"+imageName)
 		if err != nil {
 			Utils.PrintFatal("Singularity build failed: %s", err)
 		}
