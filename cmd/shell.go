@@ -12,7 +12,7 @@ var shellCmd = &cobra.Command{
 	Short: "Starts a Bash shell into the current container",
 	Long:  `Starts a Bash shell into the current container. Mainly used for debugging.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		RunInteractive([]string{"/bin/bash"}, nil)
+		runInteractive([]string{"/bin/bash"}, nil)
 	},
 }
 
@@ -20,9 +20,7 @@ func init() {
 	rootCmd.AddCommand(shellCmd)
 }
 
-// A lot of this code was adapted from:
-// https://stackoverflow.com/questions/58732588/accept-user-input-os-stdin-to-container-using-golang-docker-sdk-interactive-co
-func RunInteractive(entrypoint []string, args []string) {
+func runInteractive(entrypoint []string, args []string) {
 
 	config := Utils.ReadMandatoryProjectConfig()
 	versionTag := config.GetNameVersion()
@@ -35,7 +33,7 @@ func RunInteractive(entrypoint []string, args []string) {
 
 	i := 2
 	if EnvParam != nil {
-		for i, v := range EnvParam {
+		for _, v := range EnvParam {
 			cmdArgs[i] = "-e"
 			cmdArgs[i+1] = v
 			i += 2
@@ -54,6 +52,9 @@ func RunInteractive(entrypoint []string, args []string) {
 	}
 
 	/*
+		// A lot of this code was adapted from:
+		// https://stackoverflow.com/questions/58732588/accept-user-input-os-stdin-to-container-using-golang-docker-sdk-interactive-co
+
 		cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 		if err != nil {
 			Utils.PrintFatal("%s", err)

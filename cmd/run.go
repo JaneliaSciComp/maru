@@ -14,7 +14,7 @@ var runCmd = &cobra.Command{
 The current directory must contain a maru.yaml file describing the project. You can create a runnable project using the init and build commands. 
 `,
 	Run: func(cmd *cobra.Command, args []string) {
-		RunContainer(nil, args)
+		runContainer(args)
 	},
 }
 
@@ -24,7 +24,7 @@ func init() {
 	runCmd.DisableFlagParsing = true
 }
 
-func RunContainer(entrypoint []string, args []string) {
+func runContainer(args []string) {
 
 	config := Utils.ReadMandatoryProjectConfig()
 	versionTag := config.GetNameVersion()
@@ -37,7 +37,7 @@ func RunContainer(entrypoint []string, args []string) {
 
 	i := 2
 	if EnvParam != nil {
-		for i, v := range EnvParam {
+		for _, v := range EnvParam {
 			cmdArgs[i] = "-e"
 			cmdArgs[i+1] = v
 			i += 2
@@ -47,9 +47,9 @@ func RunContainer(entrypoint []string, args []string) {
 	cmdArgs[i] = versionTag
 
 	if args != nil {
-		for i, v := range args {
-			cmdArgs[i] = v
+		for _, v := range args {
 			i++
+			cmdArgs[i] = v
 		}
 	}
 
