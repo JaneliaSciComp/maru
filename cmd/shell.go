@@ -11,6 +11,7 @@ var shellCmd = &cobra.Command{
 	Use:   "shell",
 	Short: "Starts a Bash shell into the current container",
 	Long:  `Starts a Bash shell into the current container. Mainly used for debugging.`,
+	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		runInteractive([]string{"/bin/bash"}, nil)
 	},

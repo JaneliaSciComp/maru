@@ -108,14 +108,3 @@ func runContainer(args []string) {
 	// 		Utils.PrintFatal("%s", err)
 	// 	}
 }
-
-func GetEnvVariableString() string {
-	envParams := make([]string, len(EnvParam)+1)
-	if EnvParam != nil {
-		for i, v := range EnvParam {
-			envParams[i] = "-e " + v
-		}
-		envParams[len(EnvParam)] = ""
-	}
-	return strings.Join(envParams, " ")
-}
