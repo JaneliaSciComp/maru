@@ -9,7 +9,11 @@ import (
 )
 
 var cfgFile string
+
+// EnvParam includes any environment variables set by the user using the --env or -e flags.
 var EnvParam []string
+
+// UserParam is the user for the container, set by the --user or -u flag.
 var UserParam string
 
 // rootCmd represents the base command when called without any subcommands
@@ -61,6 +65,6 @@ func initConfig() {
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
-		Utils.PrintMessage("Using config file:", viper.ConfigFileUsed())
+		Utils.PrintMessage("Using config file: %s", viper.ConfigFileUsed())
 	}
 }
