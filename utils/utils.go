@@ -13,7 +13,7 @@ import (
 	Aurora "github.com/logrusorgru/aurora"
 )
 
-const MaruVersion = "0.1.1"
+const MaruVersion = "0.3.0"
 const DockerFilePath = "Dockerfile"
 
 var Debug = false
